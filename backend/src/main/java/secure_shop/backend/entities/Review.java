@@ -30,7 +30,7 @@ public class Review {
     private Integer rating;
 
     @Size(max = 1000, message = "Bình luận tối đa 1000 ký tự")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String comment;
 
     @NotNull(message = "Trạng thái đánh giá không được để trống")

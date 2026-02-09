@@ -1,19 +1,13 @@
 package secure_shop.backend.config;
 
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Chat configuration - no longer needed with direct Gemini REST client
+ * Keeping file for compatibility but can be removed
+ */
 @Configuration
 public class ChatConfig {
-
-    @Bean
-    public ChatClient chatClient(@Autowired(required = false) ChatModel chatModel) {
-        if (chatModel == null) {
-            return null;
-        }
-        return ChatClient.builder(chatModel).build();
-    }
+    // Direct GeminiRestClient is now injected via @Service
+    // No bean configuration needed
 }

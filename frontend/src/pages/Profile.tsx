@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { logout, restoreAuthSuccess } from '../stores/authSlice';
 import { toast } from 'react-toastify';
-import { userApi, AddressApi, ReviewApi } from '../utils/api';
+import { userApi, AddressApi, ReviewApi, SupportTicketApi } from '../utils/api';
 import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../utils/authService';
 import { imageUploadService } from '../utils/imageUploadService';
@@ -15,6 +15,7 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+import { getProvinces, getDistricts, getWards } from '../utils/locationService';
 
 interface Address {
   id: number;
@@ -35,6 +36,15 @@ interface Review {
   productName?: string;
 }
 
+interface Ticket {
+  id: string;
+  title: string;
+  subject: string;
+  content: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  createdAt: string;
+}
+
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -53,9 +63,9 @@ const Profile: React.FC = () => {
   const [savingEdit, setSavingEdit] = useState(false);
 
   const handleEditReview = (review: Review) => {
-  setEditingReview(review);
-  setEditRating(review.rating);
-  setEditComment(review.comment);
+    setEditingReview(review);
+    setEditRating(review.rating);
+    setEditComment(review.comment);
   };
 
   const handleUpdateReview = async () => {
@@ -156,7 +166,6 @@ const Profile: React.FC = () => {
       const oldAvatarUrl = formData.avatarUrl;
 
       const result = await imageUploadService.uploadImage(file, {
-        bucket: 'avatars',
         folder: 'users'
       });
 
@@ -171,12 +180,12 @@ const Profile: React.FC = () => {
 
       if (oldAvatarUrl) {
         try {
-          await imageUploadService.deleteImage(oldAvatarUrl, 'avatars');
+          await imageUploadService.deleteImage(oldAvatarUrl);
         } catch (deleteError) {
           console.error('Failed to delete old avatar:', deleteError);
         }
       }
-      
+
       toast.success('Cập nhật ảnh đại diện thành công!');
 
       const response = await axiosInstance.get("/auth/me");
@@ -191,7 +200,7 @@ const Profile: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Avatar upload failed:', error);
-      
+
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (!error.message?.includes('File size') && !error.message?.includes('Only')) {
@@ -300,6 +309,7 @@ const Profile: React.FC = () => {
     province: '',
     isDefault: false,
   });
+
   const [showAddressForm, setShowAddressForm] = useState(false);
 
   // Province API state
@@ -325,14 +335,11 @@ const Profile: React.FC = () => {
   };
 
   // Fetch provinces
-  const fetchProvinces = async () => {
+  const fetchProvinces = () => {
     setLoadingProvinces(true);
     try {
-      const response = await fetch('https://vapi.vnappmob.com/api/v2/province/');
-      const data = await response.json();
-      if (data.results) {
-        setProvinces(data.results);
-      }
+      const results = getProvinces();
+      setProvinces(results);
     } catch (error) {
       toast.error('Lỗi khi tải danh sách tỉnh thành!');
     } finally {
@@ -341,17 +348,14 @@ const Profile: React.FC = () => {
   };
 
   // Fetch districts when province is selected
-  const fetchDistricts = async (provinceId: string) => {
+  const fetchDistricts = (provinceId: string) => {
     setLoadingDistricts(true);
     setDistricts([]);
     setWards([]);
     setSelectedDistrictId('');
     try {
-      const response = await fetch(`https://vapi.vnappmob.com/api/v2/province/district/${provinceId}`);
-      const data = await response.json();
-      if (data.results) {
-        setDistricts(data.results);
-      }
+      const results = getDistricts(provinceId);
+      setDistricts(results);
     } catch (error) {
       toast.error('Lỗi khi tải danh sách quận huyện!');
     } finally {
@@ -360,15 +364,12 @@ const Profile: React.FC = () => {
   };
 
   // Fetch wards when district is selected
-  const fetchWards = async (districtId: string) => {
+  const fetchWards = (districtId: string) => {
     setLoadingWards(true);
     setWards([]);
     try {
-      const response = await fetch(`https://vapi.vnappmob.com/api/v2/province/ward/${districtId}`);
-      const data = await response.json();
-      if (data.results) {
-        setWards(data.results);
-      }
+      const results = getWards(districtId);
+      setWards(results);
     } catch (error) {
       toast.error('Lỗi khi tải danh sách phường xã!');
     } finally {
@@ -376,24 +377,57 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Tickets
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [closingTicket, setClosingTicket] = useState<string | null>(null);
+
+  const fetchMyTickets = async () => {
+    setLoadingTickets(true);
+    try {
+      const data = await SupportTicketApi.getMyTickets({ size: 20 });
+      setTickets(data.content);
+    } catch (error) {
+      toast.error('Lỗi khi tải yêu cầu hỗ trợ!');
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  const handleCloseTicket = async (id: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn đóng yêu cầu này?')) return;
+    setClosingTicket(id);
+    try {
+      await SupportTicketApi.closeTicket(id);
+      toast.success('Đã đóng yêu cầu thành công!');
+      fetchMyTickets();
+    } catch {
+      toast.error('Lỗi khi đóng yêu cầu!');
+    } finally {
+      setClosingTicket(null);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'address') {
       fetchAddresses();
       fetchProvinces();
+    } else if (activeTab === 'support') {
+      fetchMyTickets();
     }
   }, [activeTab]);
 
   const handleAddressInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
     if (name === 'province') {
       const province = provinces.find(p => p.province_id === value);
       setSelectedProvinceId(value);
-      setAddressForm(prev => ({ 
-        ...prev, 
-        province: province?.province_name || '', 
-        ward: '' 
+      setAddressForm(prev => ({
+        ...prev,
+        province: province?.province_name || '',
+        ward: ''
       }));
       setSelectedDistrictId('');
       if (value) {
@@ -413,9 +447,9 @@ const Profile: React.FC = () => {
     } else if (name === 'ward') {
       const ward = wards.find(w => w.ward_id === value);
       const district = districts.find(d => d.district_id === selectedDistrictId);
-      setAddressForm(prev => ({ 
-        ...prev, 
-        ward: ward && district ? `${ward.ward_name}, ${district.district_name}` : '' 
+      setAddressForm(prev => ({
+        ...prev,
+        ward: ward && district ? `${ward.ward_name}, ${district.district_name}` : ''
       }));
     } else {
       setAddressForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -459,15 +493,15 @@ const Profile: React.FC = () => {
     setWards([]);
   };
 
-    // Reset address form
+  // Reset address form
   const resetAddressForm = () => {
-    setAddressForm({ 
-      name: '', 
-      phone: '', 
-      street: '', 
-      ward: '', 
-      province: '', 
-      isDefault: false 
+    setAddressForm({
+      name: '',
+      phone: '',
+      street: '',
+      ward: '',
+      province: '',
+      isDefault: false
     });
     setSelectedProvinceId('');
     setSelectedDistrictId('');
@@ -493,7 +527,7 @@ const Profile: React.FC = () => {
       fetchAddresses();
     } catch (error) {
       toast.error('Lỗi khi xóa địa chỉ!');
-  }
+    }
 
   }
 
@@ -507,6 +541,7 @@ const Profile: React.FC = () => {
     { key: 'account', label: 'Thông tin cá nhân' },
     { key: 'reviews', label: 'Đánh giá của tôi' },
     { key: 'address', label: 'Địa chỉ' },
+    { key: 'support', label: 'Hỗ trợ' },
     { key: 'payment', label: 'Phương thức thanh toán' },
     { key: 'password', label: 'Đổi mật khẩu' },
     { key: 'settings', label: 'Tùy chỉnh khác' },
@@ -523,15 +558,15 @@ const Profile: React.FC = () => {
         return (
           <form onSubmit={handleFormSubmit}>
             <h2 className="text-xl font-semibold text-zinc-800 mb-4">Thông tin cá nhân</h2>
-            
+
             {/* Avatar Section */}
             <div className="flex flex-col items-center mb-6">
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-200 shadow-lg">
                   {formData.avatarUrl ? (
-                    <img 
-                      src={formData.avatarUrl} 
-                      alt="Avatar" 
+                    <img
+                      src={formData.avatarUrl}
+                      alt="Avatar"
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -540,7 +575,7 @@ const Profile: React.FC = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Overlay on hover */}
                 <button
                   type="button"
@@ -561,7 +596,7 @@ const Profile: React.FC = () => {
                   )}
                 </button>
               </div>
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -569,7 +604,7 @@ const Profile: React.FC = () => {
                 onChange={handleAvatarChange}
                 className="hidden"
               />
-              
+
               <p className="text-sm text-gray-500 mt-3 text-center">
                 Click vào ảnh để thay đổi
                 <br />
@@ -579,28 +614,28 @@ const Profile: React.FC = () => {
 
             <p className="text-gray-600 mb-4 text-sm sm:text-base">Email: {userEmail}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <input 
-                className="border p-2 rounded text-sm sm:text-base" 
-                value={formData.name} 
-                name="name" 
-                onChange={handleInputChange} 
-                placeholder="Họ tên" 
+              <input
+                className="border p-2 rounded text-sm sm:text-base"
+                value={formData.name}
+                name="name"
+                onChange={handleInputChange}
+                placeholder="Họ tên"
               />
               <div className="flex flex-col">
-                <input 
-                  className="border p-2 rounded text-sm sm:text-base" 
-                  value={formData.phone} 
-                  name="phone" 
-                  onChange={handleInputChange} 
-                  placeholder="Số điện thoại" 
+                <input
+                  className="border p-2 rounded text-sm sm:text-base"
+                  value={formData.phone}
+                  name="phone"
+                  onChange={handleInputChange}
+                  placeholder="Số điện thoại"
                   type="tel"
                 />
                 <span className="text-xs text-gray-500 mt-1">VD: 0901234567 hoặc +84901234567</span>
               </div>
-              <input 
-                className="border p-2 rounded text-sm sm:text-base" 
-                placeholder="Ngày sinh" 
-                type="date" 
+              <input
+                className="border p-2 rounded text-sm sm:text-base"
+                placeholder="Ngày sinh"
+                type="date"
               />
               <select className="border p-2 rounded text-sm sm:text-base">
                 <option>Giới tính</option>
@@ -615,7 +650,7 @@ const Profile: React.FC = () => {
           </form>
         );
 
-        case 'reviews':
+      case 'reviews':
         return (
           <div>
             <h2 className="text-xl font-semibold mb-4">Đánh giá của tôi</h2>
@@ -636,7 +671,7 @@ const Profile: React.FC = () => {
               ))}
             </div>
 
-            
+
 
             {loadingReviews ? (
               <p>Đang tải đánh giá...</p>
@@ -666,11 +701,10 @@ const Profile: React.FC = () => {
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-4 h-4 ${
-                            i < review.rating
-                              ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-gray-300'
-                          }`}
+                          className={`w-4 h-4 ${i < review.rating
+                            ? 'text-yellow-400 fill-yellow-400'
+                            : 'text-gray-300'
+                            }`}
                         />
                       ))}
                     </div>
@@ -716,11 +750,10 @@ const Profile: React.FC = () => {
                               <Star
                                 key={i}
                                 onClick={() => setEditRating(i)}
-                                className={`w-6 h-6 cursor-pointer ${
-                                  i <= editRating
-                                    ? 'text-yellow-400 fill-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
+                                className={`w-6 h-6 cursor-pointer ${i <= editRating
+                                  ? 'text-yellow-400 fill-yellow-400'
+                                  : 'text-gray-300'
+                                  }`}
                               />
                             ))}
                           </div>
@@ -759,7 +792,78 @@ const Profile: React.FC = () => {
           </div>
         );
 
-        case 'address':
+
+
+      case 'support':
+        return (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Yêu cầu hỗ trợ</h2>
+              <button
+                onClick={fetchMyTickets}
+                className="text-indigo-600 hover:underline"
+              >
+                Làm mới
+              </button>
+            </div>
+            {loadingTickets ? (
+              <p>Đang tải...</p>
+            ) : tickets.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>Bạn chưa gửi yêu cầu hỗ trợ nào.</p>
+                <a href="/contact" className="text-indigo-600 font-medium hover:underline mt-2 inline-block">
+                  Gửi yêu cầu ngay
+                </a>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tickets.map((ticket) => (
+                  <div key={ticket.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className={`inline-block px-2 py-1 rounded text-xs font-semibold mb-2
+                           ${ticket.status === 'OPEN' ? 'bg-blue-100 text-blue-700' :
+                            ticket.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-700' :
+                              ticket.status === 'RESOLVED' ? 'bg-green-100 text-green-700' :
+                                'bg-gray-100 text-gray-700'}
+                         `}>
+                          {ticket.status === 'OPEN' ? 'Đang mở' :
+                            ticket.status === 'IN_PROGRESS' ? 'Đang xử lý' :
+                              ticket.status === 'RESOLVED' ? 'Đã giải quyết' : 'Đã đóng'}
+                        </span>
+                        <h3 className="font-semibold text-lg">{ticket.title}</h3>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(ticket.createdAt).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-gray-600 mb-1">
+                      <span className="font-medium">Chủ đề:</span> {ticket.subject}
+                    </div>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded mt-2 border border-gray-100">
+                      {ticket.content}
+                    </p>
+
+                    {(ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS') && (
+                      <div className="mt-3 text-right">
+                        <button
+                          onClick={() => handleCloseTicket(ticket.id)}
+                          disabled={closingTicket === ticket.id}
+                          className="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1 rounded hover:bg-red-50 transition"
+                        >
+                          {closingTicket === ticket.id ? 'Đang đóng...' : 'Đóng yêu cầu'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'address':
         return (
           <div>
             <h2 className="text-xl font-semibold mb-4">Địa chỉ của tôi</h2>
@@ -783,12 +887,12 @@ const Profile: React.FC = () => {
                 </div>
               ))
             )}
-            <button 
-              onClick={() => { 
-                setShowAddressForm(true); 
-                setEditingAddress(null); 
+            <button
+              onClick={() => {
+                setShowAddressForm(true);
+                setEditingAddress(null);
                 resetAddressForm();
-              }} 
+              }}
               className="mt-3 bg-purple-500 text-white px-4 py-2 rounded w-full sm:w-auto text-sm sm:text-base"
             >
               + Thêm địa chỉ
@@ -803,7 +907,7 @@ const Profile: React.FC = () => {
                     <h3 className="text-xl font-semibold text-gray-800">
                       {editingAddress ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'}
                     </h3>
-                    <button 
+                    <button
                       onClick={() => {
                         setShowAddressForm(false);
                         resetAddressForm();
@@ -824,13 +928,13 @@ const Profile: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tên người nhận <span className="text-red-500">*</span>
                         </label>
-                        <input 
-                          name="name" 
-                          value={addressForm.name} 
-                          onChange={handleAddressInputChange} 
-                          placeholder="Nhập tên người nhận" 
-                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
-                          required 
+                        <input
+                          name="name"
+                          value={addressForm.name}
+                          onChange={handleAddressInputChange}
+                          placeholder="Nhập tên người nhận"
+                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          required
                         />
                       </div>
 
@@ -839,13 +943,13 @@ const Profile: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Số điện thoại <span className="text-red-500">*</span>
                         </label>
-                        <input 
-                          name="phone" 
-                          value={addressForm.phone} 
-                          onChange={handleAddressInputChange} 
-                          placeholder="Nhập số điện thoại" 
-                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
-                          required 
+                        <input
+                          name="phone"
+                          value={addressForm.phone}
+                          onChange={handleAddressInputChange}
+                          placeholder="Nhập số điện thoại"
+                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          required
                         />
                       </div>
 
@@ -854,26 +958,26 @@ const Profile: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Địa chỉ cụ thể <span className="text-red-500">*</span>
                         </label>
-                        <input 
-                          name="street" 
-                          value={addressForm.street} 
-                          onChange={handleAddressInputChange} 
-                          placeholder="Số nhà, tên đường" 
-                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
-                          required 
+                        <input
+                          name="street"
+                          value={addressForm.street}
+                          onChange={handleAddressInputChange}
+                          placeholder="Số nhà, tên đường"
+                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          required
                         />
                       </div>
-                      
+
                       {/* Province Selector */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Tỉnh / Thành phố <span className="text-red-500">*</span>
                         </label>
-                        <select 
-                          name="province" 
-                          value={selectedProvinceId} 
-                          onChange={handleAddressInputChange} 
-                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                        <select
+                          name="province"
+                          value={selectedProvinceId}
+                          onChange={handleAddressInputChange}
+                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           required
                           disabled={loadingProvinces}
                         >
@@ -891,11 +995,11 @@ const Profile: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Quận / Huyện <span className="text-red-500">*</span>
                         </label>
-                        <select 
-                          name="district" 
-                          value={selectedDistrictId} 
-                          onChange={handleAddressInputChange} 
-                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                        <select
+                          name="district"
+                          value={selectedDistrictId}
+                          onChange={handleAddressInputChange}
+                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                           required
                           disabled={!selectedProvinceId || loadingDistricts}
                         >
@@ -913,11 +1017,11 @@ const Profile: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Phường / Xã <span className="text-red-500">*</span>
                         </label>
-                        <select 
-                          name="ward" 
-                          value={wards.find(w => addressForm.ward.includes(w.ward_name))?.ward_id || ''} 
-                          onChange={handleAddressInputChange} 
-                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed" 
+                        <select
+                          name="ward"
+                          value={wards.find(w => addressForm.ward.includes(w.ward_name))?.ward_id || ''}
+                          onChange={handleAddressInputChange}
+                          className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                           required
                           disabled={!selectedDistrictId || loadingWards}
                         >
@@ -932,10 +1036,10 @@ const Profile: React.FC = () => {
 
                       {/* Default Checkbox */}
                       <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                        <input 
-                          type="checkbox" 
-                          name="isDefault" 
-                          checked={addressForm.isDefault} 
+                        <input
+                          type="checkbox"
+                          name="isDefault"
+                          checked={addressForm.isDefault}
                           onChange={handleAddressInputChange}
                           className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                           id="isDefault"
@@ -947,18 +1051,18 @@ const Profile: React.FC = () => {
 
                       {/* Form Actions */}
                       <div className="flex gap-3 pt-4">
-                        <button 
-                          type="submit" 
+                        <button
+                          type="submit"
                           className="flex-1 bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors font-medium"
                         >
                           {editingAddress ? 'Cập nhật' : 'Thêm địa chỉ'}
                         </button>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => {
                             setShowAddressForm(false);
                             resetAddressForm();
-                          }} 
+                          }}
                           className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                         >
                           Hủy
@@ -1053,10 +1157,10 @@ const Profile: React.FC = () => {
             className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center justify-between"
           >
             <span>Menu tài khoản</span>
-            <svg 
-              className={`w-5 h-5 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-5 h-5 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1076,7 +1180,7 @@ const Profile: React.FC = () => {
           <ul className="space-y-2">
             {menu.map(m => (
               <li key={m.key}>
-                <button 
+                <button
                   onClick={() => handleMenuItemClick(m.key)}
                   className={`
                     w-full text-left px-3 py-2 rounded hover:bg-purple-100 text-sm sm:text-base
@@ -1088,8 +1192,8 @@ const Profile: React.FC = () => {
               </li>
             ))}
             <li>
-              <button 
-                onClick={handleLogout} 
+              <button
+                onClick={handleLogout}
                 className="w-full text-left px-3 py-2 rounded text-red-600 hover:bg-red-100 text-sm sm:text-base"
               >
                 Đăng xuất

@@ -64,7 +64,7 @@ const Privacy: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="relative h-[300px] bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -87,7 +87,7 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Introduction */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -98,8 +98,8 @@ const Privacy: React.FC = () => {
           >
             <div className="bg-white border-l-4 border-purple-600 p-8 rounded-r-lg shadow-md">
               <p className="text-lg text-gray-700 leading-relaxed">
-                Tại SecureShop, chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của bạn. 
-                Chính sách này mô tả cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu của bạn một cách 
+                Tại Security Shop, chúng tôi cam kết bảo vệ quyền riêng tư và thông tin cá nhân của bạn.
+                Chính sách này mô tả cách chúng tôi thu thập, sử dụng và bảo vệ dữ liệu của bạn một cách
                 minh bạch và an toàn nhất.
               </p>
             </div>
@@ -108,14 +108,14 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Data Collection */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Thông Tin Chúng Tôi Thu Thập</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -155,14 +155,14 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Security Measures */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Biện Pháp Bảo Mật</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -195,14 +195,14 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* User Rights */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Quyền Của Bạn</h2>
             <p className="text-gray-600">
@@ -228,8 +228,8 @@ const Privacy: React.FC = () => {
             <div className="mt-8 pt-6 border-t border-gray-200">
               <p className="text-gray-600 text-center">
                 Để thực hiện các quyền này, vui lòng liên hệ:{' '}
-                <a href="mailto:privacy@secureshop.vn" className="text-purple-600 hover:text-purple-700 font-semibold">
-                  privacy@secureshop.vn
+                <a href="mailto:privacy@securityshop.vn" className="text-purple-600 hover:text-purple-700 font-semibold">
+                  privacy@securityshop.vn
                 </a>
               </p>
             </div>
@@ -238,7 +238,7 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Additional Info */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8">
             <motion.div
@@ -253,8 +253,8 @@ const Privacy: React.FC = () => {
                 <h3 className="text-xl font-semibold text-zinc-800">Lưu Trữ Dữ Liệu</h3>
               </div>
               <p className="text-gray-700">
-                Chúng tôi chỉ lưu trữ thông tin cá nhân của bạn trong thời gian cần thiết để cung cấp 
-                dịch vụ và tuân thủ các yêu cầu pháp lý (thường là 5-7 năm cho hồ sơ tài chính). 
+                Chúng tôi chỉ lưu trữ thông tin cá nhân của bạn trong thời gian cần thiết để cung cấp
+                dịch vụ và tuân thủ các yêu cầu pháp lý (thường là 5-7 năm cho hồ sơ tài chính).
                 Sau đó, dữ liệu sẽ được xóa hoặc ẩn danh hóa.
               </p>
             </motion.div>
@@ -271,7 +271,7 @@ const Privacy: React.FC = () => {
                 <h3 className="text-xl font-semibold text-zinc-800">Cookies</h3>
               </div>
               <p className="text-gray-700">
-                Chúng tôi sử dụng cookies để cải thiện trải nghiệm của bạn, ghi nhớ thông tin đăng nhập 
+                Chúng tôi sử dụng cookies để cải thiện trải nghiệm của bạn, ghi nhớ thông tin đăng nhập
                 và phân tích lưu lượng truy cập. Bạn có thể quản lý cookies qua cài đặt trình duyệt.
               </p>
             </motion.div>
@@ -280,7 +280,7 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Data Sharing */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -291,7 +291,7 @@ const Privacy: React.FC = () => {
           >
             <h2 className="text-2xl font-bold text-zinc-800 mb-4">Chia Sẻ Thông Tin</h2>
             <p className="text-gray-700 mb-4">
-              Chúng tôi không bán hoặc cho thuê thông tin cá nhân của bạn. Chúng tôi chỉ chia sẻ 
+              Chúng tôi không bán hoặc cho thuê thông tin cá nhân của bạn. Chúng tôi chỉ chia sẻ
               thông tin với:
             </p>
             <div className="grid md:grid-cols-2 gap-4">
@@ -329,7 +329,7 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -340,13 +340,13 @@ const Privacy: React.FC = () => {
           >
             <h2 className="text-2xl font-bold mb-4">Liên Hệ Về Bảo Mật</h2>
             <p className="mb-6">
-              Nếu bạn có câu hỏi về chính sách bảo mật này hoặc muốn thực hiện quyền của mình, 
+              Nếu bạn có câu hỏi về chính sách bảo mật này hoặc muốn thực hiện quyền của mình,
               vui lòng liên hệ:
             </p>
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <p className="font-semibold mb-1">Email Bảo Mật</p>
-                <a href="mailto:privacy@secureshop.vn" className="hover:underline">privacy@secureshop.vn</a>
+                <a href="mailto:privacy@securityshop.vn" className="hover:underline">privacy@securityshop.vn</a>
               </div>
               <div>
                 <p className="font-semibold mb-1">Điện thoại</p>
@@ -354,7 +354,7 @@ const Privacy: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold mb-1">Địa chỉ</p>
-                <p>123 Đường ABC, Quận 1, TP.HCM</p>
+                <p>Tòa nhà FPT Polytechnic, Phố Trịnh Văn Bô, Nam Từ Liêm, Hà Nội</p>
               </div>
             </div>
           </motion.div>
@@ -362,7 +362,7 @@ const Privacy: React.FC = () => {
       </section>
 
       {/* Footer CTA */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

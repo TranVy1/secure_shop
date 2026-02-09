@@ -1,8 +1,5 @@
 package secure_shop.backend.config.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +22,15 @@ import secure_shop.backend.exception.JwtAuthenticationEntryPoint;
 import secure_shop.backend.security.CustomAccessDeniedHandler;
 import secure_shop.backend.security.jwt.JwtAuthenticationFilter;
 import secure_shop.backend.security.oauth2.OAuth2FailureHandler;
+import org.springframework.security.oauth2.client.oidc.authentication.OidcIdTokenDecoderFactory;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import java.time.Duration;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,232 +42,271 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
-    private final AuthenticationProvider authenticationProvider;
-    private final AuthenticationSuccessHandler oauthSuccessHandler;
-    private final OAuth2FailureHandler oauthFailureHandler;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-    private final CustomAccessDeniedHandler customAccessDeniedHandler;
-    private final RedisOAuth2AuthorizationRequestRepository redisOAuth2AuthorizationRequestRepository;
+        private final JwtAuthenticationFilter jwtAuthFilter;
+        private final AuthenticationProvider authenticationProvider;
+        private final AuthenticationSuccessHandler oauthSuccessHandler;
+        private final OAuth2FailureHandler oauthFailureHandler;
+        private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+        private final CustomAccessDeniedHandler customAccessDeniedHandler;
+        private final HttpCookieOAuth2AuthorizationRequestRepository cookieOAuth2AuthorizationRequestRepository;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // 1. CORS - PHẢI ĐẦU TIÊN
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        @Bean
+        public JwtDecoderFactory<ClientRegistration> idTokenDecoderFactory() {
+            OidcIdTokenDecoderFactory idTokenDecoderFactory = new OidcIdTokenDecoderFactory();
+            idTokenDecoderFactory.setJwtValidatorFactory(clientRegistration -> {
+                OAuth2TokenValidator<Jwt> idTokenValidator = new JwtTimestampValidator(Duration.ofSeconds(300));
+                OAuth2TokenValidator<Jwt> issuerValidator = new JwtIssuerValidator(clientRegistration.getProviderDetails().getIssuerUri());
+                return new DelegatingOAuth2TokenValidator<>(issuerValidator, idTokenValidator);
+            });
+            return idTokenDecoderFactory;
+        }
 
-                // 2. CSRF
-                .csrf(csrf -> csrf.disable())
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                // 1. CORS - PHẢI ĐẦU TIÊN
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // 3. Session Management
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                // 2. CSRF
+                                .csrf(csrf -> csrf.disable())
 
-                // 4. Authorization Rules - THỨ TỰ QUAN TRỌNG
-                .authorizeHttpRequests(auth -> auth
-                        // OPTIONS requests - CHO PHÉP TẤT CẢ (CORS preflight)
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                // 3. Session Management
+                                .sessionManagement(session -> session.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
 
-                        // Auth endpoints - public login/register/reset
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/refresh",
-                                "/api/auth/register",
-                                "/api/auth/verify-email",
-                                "/api/auth/resend-verification",
-                                "/api/auth/forgot-password",
-                                "/api/auth/verify-token",
-                                "/api/auth/reset-password",
-                                "/oauth2/**",
-                                "/login/oauth2/**",
-                                "/error"
-                        ).permitAll()
-                        .requestMatchers("/api/auth/me").authenticated()
+                                // 4. Authorization Rules - THỨ TỰ QUAN TRỌNG
+                                .authorizeHttpRequests(auth -> auth
+                                                // OPTIONS requests - CHO PHÉP TẤT CẢ (CORS preflight)
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // User endpoints
-                        .requestMatchers("/api/users/me/**").authenticated()
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                                                // DEBUG endpoints - XÓA SAU KHI FIX XONG!!!
+                                                .requestMatchers("/api/debug/**").permitAll()
 
-                        // Address endpoints
-                        .requestMatchers("/api/addresses/**").authenticated()
+                                                // Auth endpoints - public login/register/reset
+                                                .requestMatchers(
+                                                                "/api/auth/login",
+                                                                "/api/auth/refresh",
+                                                                "/api/auth/register",
+                                                                "/api/auth/verify-email",
+                                                                "/api/auth/resend-verification",
+                                                                "/api/auth/forgot-password",
+                                                                "/api/auth/verify-token",
+                                                                "/api/auth/reset-password",
+                                                                "/oauth2/**",
+                                                                "/login/oauth2/**",
+                                                                "/error")
+                                                .permitAll()
+                                                .requestMatchers("/api/auth/me").authenticated()
 
-                        // Ticket endpoints
-                        .requestMatchers("/api/tickets/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/tickets/**").authenticated()
+                                                // Upload endpoints - allow public access to uploaded files
+                                                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                                                .requestMatchers("/api/upload/**").hasRole("ADMIN")
 
-                        // Article endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/articles", "/api/articles/**").permitAll()
-                        .requestMatchers("/api/articles/**").hasRole("ADMIN")
+                                                // User endpoints
+                                                .requestMatchers("/api/users/me/**").authenticated()
+                                                .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        // Brand endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/brands", "/api/brands/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/brands/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/brands/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/brands/**").hasRole("ADMIN")
+                                                // Address endpoints
+                                                .requestMatchers("/api/addresses/**").authenticated()
 
-                        // Category endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/active", "/api/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+                                                // Ticket endpoints
+                                                .requestMatchers("/api/tickets/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/tickets/**").authenticated()
 
-                        // Inventory endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/inventories", "/api/inventories/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/inventories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/inventories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/inventories/**").hasRole("ADMIN")
+                                                // Article endpoints
+                                                .requestMatchers(HttpMethod.GET, "/api/articles", "/api/articles/**")
+                                                .permitAll()
+                                                .requestMatchers("/api/articles/**").hasRole("ADMIN")
 
-                        // === Media Asset endpoints ===
-                        .requestMatchers(HttpMethod.GET, "/api/media/product/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/media").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/media/{id}").hasRole("ADMIN")
+                                                // Brand endpoints
+                                                .requestMatchers(HttpMethod.GET, "/api/brands", "/api/brands/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/brands/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/brands/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/brands/**").hasRole("ADMIN")
 
-                        // Product endpoints
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/products",
-                                "/api/products/**",
-                                "/api/products/summary/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                                                // Category endpoints
+                                                .requestMatchers(HttpMethod.GET, "/api/categories",
+                                                                "/api/categories/active", "/api/categories/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/categories/**")
+                                                .hasRole("ADMIN")
 
-                        // Order endpoints
-                        .requestMatchers("/api/orders/my-orders", "/api/orders/cancel/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/orders").authenticated()
+                                                // Inventory endpoints
+                                                .requestMatchers(HttpMethod.GET, "/api/inventories",
+                                                                "/api/inventories/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/inventories/**")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/inventories/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/inventories/**")
+                                                .hasRole("ADMIN")
 
-                        // Discount endpoints
-                        .requestMatchers(
-                                "/api/discounts/active",
-                                "/api/discounts/code/**"
-                        ).permitAll()
-                        .requestMatchers("/api/discounts/**").hasRole("ADMIN")
+                                                // === Media Asset endpoints ===
+                                                .requestMatchers(HttpMethod.GET, "/api/media/product/**").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/media").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/media/{id}").hasRole("ADMIN")
 
-                        // Allow authenticated users to GET a single order (owner check handled by @PreAuthorize)
-                        .requestMatchers(HttpMethod.GET, "/api/orders/*").authenticated()
-                        // Admin-only operations
-                        .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN") // list all orders (paged)
-                        .requestMatchers("/api/orders/confirm/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/orders/confirm/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+                                                // Product endpoints
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/products",
+                                                                "/api/products/**",
+                                                                "/api/products/summary/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/products/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
-                        // === Payment endpoints ===
-                        .requestMatchers(HttpMethod.GET, "/api/payments/order/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/payments").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/payments", "/api/payments/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/payments/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/payments/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/payments/mark-paid/{id}").hasRole("ADMIN")
+                                                // Order endpoints
+                                                .requestMatchers("/api/orders/my-orders", "/api/orders/cancel/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/api/orders").authenticated()
 
-                        // Shipment endpoints
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/shipments/my-shipments",
-                                "/api/shipments/order/**"
-                        ).authenticated()
-                        .requestMatchers("/api/shipments/**").hasRole("ADMIN")
+                                                // Discount endpoints
+                                                .requestMatchers(
+                                                                "/api/discounts/active",
+                                                                "/api/discounts/code/**")
+                                                .permitAll()
+                                                .requestMatchers("/api/discounts/**").hasRole("ADMIN")
 
-                        // Review endpoints
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/reviews",                     // ← UNCOMMENT THIS
-                                "/api/reviews/product/**",
-                                "/api/reviews/{id}"
-                        ).permitAll()
+                                                // Allow authenticated users to GET a single order (owner check handled
+                                                // by @PreAuthorize)
+                                                .requestMatchers(HttpMethod.GET, "/api/orders/*").authenticated()
+                                                // Admin-only operations
+                                                .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN") // list
+                                                                                                                 // all
+                                                                                                                 // orders
+                                                                                                                 // (paged)
+                                                .requestMatchers("/api/orders/confirm/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/orders/confirm/**")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/reviews/user/**"
-                        ).authenticated()
+                                                // === Payment endpoints ===
+                                                .requestMatchers(HttpMethod.GET, "/api/payments/order/**")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/api/payments").authenticated()
+                                                .requestMatchers(HttpMethod.GET, "/api/payments", "/api/payments/{id}")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PUT, "/api/payments/{id}").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/payments/{id}")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.PATCH, "/api/payments/mark-paid/{id}")
+                                                .hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/reviews/approve/**", "/api/reviews/reject/**").hasRole("ADMIN")
+                                                // Shipment endpoints
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/shipments/my-shipments",
+                                                                "/api/shipments/order/**")
+                                                .authenticated()
+                                                .requestMatchers("/api/shipments/**").hasRole("ADMIN")
 
-                        // Warranty request endpoints
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/warranty-requests/order-item/**",
-                                "/api/warranty-requests/{id}",
-                                "/api/warranty-requests/user/my"
-                        ).authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/warranty-requests").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/warranty-requests/{id}").authenticated()
-                        .requestMatchers("/api/warranty-requests/**").hasRole("ADMIN")
+                                                // Review endpoints
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/reviews", // ← UNCOMMENT THIS
+                                                                "/api/reviews/product/**",
+                                                                "/api/reviews/{id}")
+                                                .permitAll()
 
-                        // Cart
-                        .requestMatchers("/api/cart/**").authenticated()
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/reviews/user/**")
+                                                .authenticated()
 
-                        // Chatbot
-                        .requestMatchers("/api/chat/ask").permitAll()
-                        .requestMatchers("/api/chat/ingest").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/reviews").authenticated()
+                                                .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
+                                                .requestMatchers(HttpMethod.DELETE, "/api/reviews/**").authenticated()
+                                                .requestMatchers(HttpMethod.PATCH, "/api/reviews/approve/**",
+                                                                "/api/reviews/reject/**")
+                                                .hasRole("ADMIN")
 
-                        // Default: require authentication for everything else
-                        .anyRequest().authenticated()
-                )
+                                                // Warranty request endpoints
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/warranty-requests/order-item/**",
+                                                                "/api/warranty-requests/{id}",
+                                                                "/api/warranty-requests/user/my")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.POST, "/api/warranty-requests")
+                                                .authenticated()
+                                                .requestMatchers(HttpMethod.PUT, "/api/warranty-requests/{id}")
+                                                .authenticated()
+                                                .requestMatchers("/api/warranty-requests/**").hasRole("ADMIN")
 
-                // 5. OAuth2 Login Configuration
-                .oauth2Login(oauth2 -> oauth2
-                        .authorizationEndpoint(authorization -> authorization
-                                .baseUri("/oauth2/authorize")
-                                .authorizationRequestRepository(redisOAuth2AuthorizationRequestRepository))
-                        .redirectionEndpoint(redirection -> redirection
-                                .baseUri("/login/oauth2/code/*"))
-                        .successHandler(oauthSuccessHandler)
-                        .failureHandler(oauthFailureHandler)
-                        .permitAll()
-                )
+                                                // Cart
+                                                .requestMatchers("/api/cart/**").authenticated()
 
-                // 6. Disable form login to prevent redirect loop
-                .formLogin(form -> form.disable())
+                                                // Chatbot
+                                                .requestMatchers("/api/chat/ask").permitAll()
+                                                .requestMatchers("/api/chat/ingest").hasRole("ADMIN")
 
-                // 7. Disable HTTP Basic
-                .httpBasic(basic -> basic.disable())
+                                                // Default: require authentication for everything else
+                                                .anyRequest().authenticated())
 
-                // 8. Exception Handling - TRẢ JSON thay vì redirect
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(customAccessDeniedHandler)
-                )
+                                // 5. OAuth2 Login Configuration
+                                .oauth2Login(oauth2 -> oauth2
+                                                .authorizationEndpoint(authorization -> authorization
+                                                                .baseUri("/oauth2/authorize")
+                                                                .authorizationRequestRepository(
+                                                                                cookieOAuth2AuthorizationRequestRepository))
+                                                .redirectionEndpoint(redirection -> redirection
+                                                                .baseUri("/login/oauth2/code/*"))
+                                                .successHandler(oauthSuccessHandler)
+                                                .failureHandler(oauthFailureHandler)
+                                                .permitAll())
 
-                // 9. Add JWT filter
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .authenticationProvider(authenticationProvider);
+                                // 6. Disable form login to prevent redirect loop
+                                .formLogin(form -> form.disable())
 
-        return http.build();
-    }
+                                // 7. Disable HTTP Basic
+                                .httpBasic(basic -> basic.disable())
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+                                // 8. Exception Handling - TRẢ JSON thay vì redirect
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                                .accessDeniedHandler(customAccessDeniedHandler))
 
-        // Allowed origins
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+                                // 9. Add JWT filter
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                                .authenticationProvider(authenticationProvider);
 
-        // Allowed methods
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
-        ));
+                return http.build();
+        }
 
-        // Allowed headers
-        configuration.setAllowedHeaders(List.of("*"));
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow credentials
-        configuration.setAllowCredentials(true);
+                // Allowed origins
+                configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
 
-        // Exposed headers
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+                // Allowed methods
+                configuration.setAllowedMethods(Arrays.asList(
+                                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
-        // Cache preflight for 1 hour
-        configuration.setMaxAge(3600L);
+                // Allowed headers
+                configuration.setAllowedHeaders(List.of("*"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+                // Allow credentials
+                configuration.setAllowCredentials(true);
 
-        return source;
-    }
+                // Exposed headers
+                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
-        return config.getAuthenticationManager();
-    }
+                // Cache preflight for 1 hour
+                configuration.setMaxAge(3600L);
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+
+                return source;
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+                        throws Exception {
+                return config.getAuthenticationManager();
+        }
 }

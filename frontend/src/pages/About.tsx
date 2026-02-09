@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { Shield, Award, Users, Clock, Target, Heart, TrendingUp, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Header from '../components/Header';
@@ -7,9 +7,9 @@ import Footer from '../components/Footer';
 const About: React.FC = () => {
 
   useEffect(() => {
-      window.scrollTo(0, 0);
-    }, []);
-  
+    window.scrollTo(0, 0);
+  }, []);
+
   const stats = [
     { icon: Users, value: '10,000+', label: 'Khách hàng tin tưởng' },
     { icon: Award, value: '15+', label: 'Năm kinh nghiệm' },
@@ -44,7 +44,7 @@ const About: React.FC = () => {
     {
       year: '2009',
       title: 'Khởi Đầu Hành Trình',
-      description: 'SecureShop được thành lập với sứ mệnh mang đến giải pháp an ninh chất lượng cho mọi gia đình Việt Nam.'
+      description: 'Security Shop được thành lập với sứ mệnh mang đến giải pháp an ninh chất lượng cho mọi gia đình Việt Nam.'
     },
     {
       year: '2015',
@@ -65,7 +65,7 @@ const About: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-        <Header />
+      <Header />
       {/* Hero Section */}
       <section className="relative h-[400px] bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -76,7 +76,7 @@ const About: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="text-white"
           >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Về SecureShop</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Về Security Shop</h1>
             <p className="text-xl md:text-2xl opacity-90 max-w-2xl">
               Đối tác tin cậy trong việc bảo vệ an toàn cho ngôi nhà và doanh nghiệp của bạn
             </p>
@@ -85,7 +85,7 @@ const About: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -118,7 +118,7 @@ const About: React.FC = () => {
       </section>
 
       {/* Story Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -130,17 +130,17 @@ const About: React.FC = () => {
               <h2 className="text-3xl font-bold text-zinc-800 mb-6">Câu Chuyện Của Chúng Tôi</h2>
               <div className="space-y-4 text-gray-600">
                 <p>
-                  SecureShop được thành lập từ năm 2009 với mục tiêu đơn giản nhưng đầy ý nghĩa: 
+                  Security Shop được thành lập từ năm 2009 với mục tiêu đơn giản nhưng đầy ý nghĩa:
                   mang đến sự an tâm cho mọi gia đình Việt Nam thông qua các giải pháp an ninh hiện đại và đáng tin cậy.
                 </p>
                 <p>
-                  Sau hơn 15 năm phát triển, chúng tôi tự hào là đơn vị tiên phong trong lĩnh vực 
-                  cung cấp thiết bị an ninh, với đội ngũ chuyên gia giàu kinh nghiệm và hệ thống 
+                  Sau hơn 15 năm phát triển, chúng tôi tự hào là đơn vị tiên phong trong lĩnh vực
+                  cung cấp thiết bị an ninh, với đội ngũ chuyên gia giàu kinh nghiệm và hệ thống
                   phân phối rộng khắp cả nước.
                 </p>
                 <p>
-                  Chúng tôi không chỉ bán sản phẩm, mà còn xây dựng niềm tin và sự an tâm cho 
-                  hàng nghìn gia đình và doanh nghiệp trên khắp Việt Nam. Mỗi sản phẩm chúng tôi 
+                  Chúng tôi không chỉ bán sản phẩm, mà còn xây dựng niềm tin và sự an tâm cho
+                  hàng nghìn gia đình và doanh nghiệp trên khắp Việt Nam. Mỗi sản phẩm chúng tôi
                   cung cấp đều được chọn lọc kỹ càng, đảm bảo chất lượng cao nhất.
                 </p>
               </div>
@@ -155,7 +155,7 @@ const About: React.FC = () => {
             >
               <img
                 src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="SecureShop Office"
+                alt="Security Shop Office"
                 className="rounded-lg shadow-2xl"
               />
             </motion.div>
@@ -164,14 +164,14 @@ const About: React.FC = () => {
       </section>
 
       {/* Values Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Giá Trị Cốt Lõi</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -204,18 +204,18 @@ const About: React.FC = () => {
       </section>
 
       {/* Timeline Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Hành Trình Phát Triển</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Những cột mốc quan trọng đánh dấu sự phát triển của SecureShop
+              Những cột mốc quan trọng đánh dấu sự phát triển của Security Shop
             </p>
           </motion.div>
 
@@ -231,9 +231,8 @@ const About: React.FC = () => {
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6 }}
                   viewport={{ once: true }}
-                  className={`flex flex-col md:flex-row gap-8 items-center ${
-                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                  }`}
+                  className={`flex flex-col md:flex-row gap-8 items-center ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                    }`}
                 >
                   <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}>
                     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -242,11 +241,11 @@ const About: React.FC = () => {
                       <p className="text-gray-600">{item.description}</p>
                     </div>
                   </div>
-                  
+
                   <div className="relative flex items-center justify-center">
                     <div className="w-4 h-4 bg-purple-600 rounded-full border-4 border-white shadow-lg"></div>
                   </div>
-                  
+
                   <div className="flex-1"></div>
                 </motion.div>
               ))}
@@ -256,45 +255,45 @@ const About: React.FC = () => {
       </section>
 
       {/* Team Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Đội Ngũ Lãnh Đạo</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Những con người tài năng và tâm huyết đằng sau sự thành công của SecureShop
+              Những con người tài năng và tâm huyết đằng sau sự thành công của Security Shop
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-5 gap-8">
             {[
               {
-                name: 'Nguyễn Võ Hiệp',
+                name: 'Đỗ Chí Công',
                 position: 'CEO & Founder',
                 image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
               },
               {
-                name: 'Phan Nhật Tiến',
+                name: 'Nguyễn văn A',
                 position: 'CTO',
                 image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
               },
               {
-                name: 'Nguyễn Hoàng Khải',
+                name: 'Nguyễn văn B',
                 position: 'Head of Operations',
                 image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
               },
               {
-                name: 'Nguyễn Gia Hào',
+                name: 'Nguyễn văn C',
                 position: 'Head of Operations',
                 image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
               },
               {
-                name: 'Nguyễn Anh Xuân Trường',
+                name: 'Nguyễn văn D',
                 position: 'Head of Operations',
                 image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
               }
@@ -321,7 +320,7 @@ const About: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-purple-600 to-cyan-500 text-white">
+      <section className="py-12 bg-gradient-to-r from-purple-600 to-cyan-500 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -331,7 +330,7 @@ const About: React.FC = () => {
           >
             <h2 className="text-3xl font-bold mb-4">Sẵn Sàng Hợp Tác Cùng Chúng Tôi?</h2>
             <p className="text-xl mb-8 opacity-90">
-              Hãy để SecureShop trở thành đối tác đáng tin cậy trong việc bảo vệ tài sản của bạn
+              Hãy để Security Shop trở thành đối tác đáng tin cậy trong việc bảo vệ tài sản của bạn
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a

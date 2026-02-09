@@ -39,7 +39,7 @@ public class Category {
     private String name;
 
     @Size(max = 2000, message = "Mô tả danh mục tối đa 2000 ký tự")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Size(max = 500, message = "Đường dẫn ảnh quá dài (tối đa 500 ký tự)")

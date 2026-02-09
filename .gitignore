@@ -1,1 +1,30 @@
-/.idea
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Database & Backups
+*.sql
+*.dump
+*.sqlite
+full.sql
+
+# Logs
+*.log
+logs/
+
+# Java Target & Builds (Redundant but safe)
+**/target/
+**/build/
+
+# Node (Redundant but safe)
+**/node_modules/
+**/dist/

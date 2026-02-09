@@ -35,12 +35,12 @@ public class Article {
     private String slug;
 
     @Size(max = 1000, message = "Tóm tắt tối đa 1000 ký tự")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String summary;
 
     @NotBlank(message = "Nội dung bài viết không được để trống")
     @Size(min = 20, message = "Nội dung bài viết phải có ít nhất 20 ký tự")
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String content;
 
     @PastOrPresent(message = "Thời điểm xuất bản không hợp lệ")

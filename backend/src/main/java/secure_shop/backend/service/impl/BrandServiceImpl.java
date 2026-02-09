@@ -64,6 +64,13 @@ public class BrandServiceImpl implements BrandService {
     @Override
     @Transactional
     public void deleteBrand(Long id) {
+        Brand brand = brandRepository.findById(id);
+        if (brand == null) {
+            throw new ResourceNotFoundException("Brand", id);
+        }
+        if (brand.getProducts() != null && !brand.getProducts().isEmpty()) {
+            throw new secure_shop.backend.exception.BusinessRuleViolationException("Không thể xóa thương hiệu này vì đang có sản phẩm liên kết. Vui lòng xóa sản phẩm trước.");
+        }
         brandRepository.deleteById(id);
     }
 }

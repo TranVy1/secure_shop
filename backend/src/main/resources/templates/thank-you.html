@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cảm ơn bạn đã mua hàng</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div
+            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+            <h1 style="color: white; margin: 0;">💝 Cảm ơn bạn!</h1>
+        </div>
+
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+            <h2 style="color: #1f2937; margin-top: 0;">Đơn hàng đã hoàn tất</h2>
+
+            <p>Xin chào <span th:text="${customerName}">khách hàng</span>,</p>
+
+            <p><strong>Security Shop</strong> xin chân thành cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi. Đơn hàng
+                <strong><span th:text="${orderName}">Tên sản phẩm...</span></strong> của bạn đã được giao thành công.
+            </p>
+
+            <p>Chúng tôi hy vọng bạn hài lòng với sản phẩm và dịch vụ. Nếu có bất kỳ vấn đề gì, đừng ngần ngại liên hệ
+                với chúng tôi.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a th:href="${orderLink}"
+                    style="background: #7c3aed; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+                    Xem lại đơn hàng
+                </a>
+            </div>
+
+            <div
+                style="background: #fff; border: 1px solid #e5e7eb; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                <h3 style="color: #374151; margin-top: 0; font-size: 16px;">🌟 Đánh giá trải nghiệm</h3>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 0;">
+                    Sự hài lòng của bạn là động lực lớn nhất của chúng tôi. Hãy dành chút thời gian đánh giá sản phẩm
+                    nhé!
+                </p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                Trân trọng,<br>
+                Đội ngũ Security Shop
+            </p>
+        </div>
+
+        <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+            <p>© 2025 Security Shop. All rights reserved.</p>
+            <p>Nếu bạn cần hỗ trợ, hãy liên hệ: <a href="mailto:support@myshop.com"
+                    style="color: #7c3aed;">support@myshop.com</a></p>
+        </div>
+    </div>
+</body>
+
+</html>

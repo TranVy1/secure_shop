@@ -18,13 +18,14 @@ const FeaturedProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(false);
-        
-        const data = await productApi.getAll({ 
-          page: 0, 
-          size: 4, 
-          sort: 'price,desc' 
+
+        const data = await productApi.getAll({
+          page: 0,
+          size: 4,
+          sort: 'price,desc',
+          inStock: true
         });
-        
+
         if (!abortController.signal.aborted) {
           setProducts(data.content);
         }
@@ -67,8 +68,8 @@ const FeaturedProducts: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="bg-white rounded-lg shadow-md overflow-hidden"
               >
                 <div className="w-full h-48 bg-gray-200 animate-pulse"></div>

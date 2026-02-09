@@ -45,7 +45,7 @@ public class SupportTicket {
 
     @NotBlank(message = "Nội dung không được để trống")
     @Size(max = 5000, message = "Nội dung không được vượt quá 5000 ký tự")
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String content;
 
     @CreationTimestamp

@@ -14,6 +14,7 @@ import { DiscountApi, orderApi, AddressApi } from '../utils/api';
 import { vnpayApi } from '../utils/vnpayService';
 import type { VNPayPaymentRequest } from '../types/vnpay';
 import type { DiscountDetail } from '../types/types';
+import { getProvinces, getDistricts, getWards } from '../utils/locationService';
 
 // Address interface
 interface Address {
@@ -86,7 +87,7 @@ const Checkout: React.FC = () => {
   // Calculate shipping fees based on city (HCM cheaper, outside HCM more expensive)
   const calculateShippingFees = () => {
     const isHCM = shippingInfo.city.toLowerCase().includes('hồ chí minh')
-    
+
     return {
       standard: isHCM ? 25000 : 40000,
       express: isHCM ? 40000 : 65000
@@ -118,15 +119,14 @@ const Checkout: React.FC = () => {
   const calculateTotal = () => Math.max(calculateSubtotal() + shippingFees[shippingMethod] - calculateDiscount(), 0);
 
   // Fetch Districts
-  const fetchDistricts = async (provinceId: string) => {
+  const fetchDistricts = (provinceId: string) => {
     setLoadingDistricts(true);
     setDistricts([]);
     setWards([]);
     setSelectedDistrictId('');
     try {
-      const res = await fetch(`https://vapi.vnappmob.com/api/v2/province/district/${provinceId}`);
-      const data = await res.json();
-      if (data.results) setDistricts(data.results);
+      const results = getDistricts(provinceId);
+      setDistricts(results);
     } catch {
       toast.error('Lỗi tải quận/huyện!');
     } finally {
@@ -135,13 +135,12 @@ const Checkout: React.FC = () => {
   };
 
   // Fetch Wards
-  const fetchWards = async (districtId: string) => {
+  const fetchWards = (districtId: string) => {
     setLoadingWards(true);
     setWards([]);
     try {
-      const res = await fetch(`https://vapi.vnappmob.com/api/v2/province/ward/${districtId}`);
-      const data = await res.json();
-      if (data.results) setWards(data.results);
+      const results = getWards(districtId);
+      setWards(results);
     } catch {
       toast.error('Lỗi tải phường/xã!');
     } finally {
@@ -151,84 +150,71 @@ const Checkout: React.FC = () => {
 
   // Load Address Into Form - FIXED
   const loadAddressIntoForm = React.useCallback(async (address: Address) => {
-    const [district, city] = address.province.includes(',') 
+    const [district, city] = address.province.includes(',')
       ? address.province.split(',').map(s => s.trim())
       : ['', address.province];
 
     // Auto-select province
-    const province = provinces.find(p => 
+    const province = provinces.find(p =>
       p.province_name === city || p.province_name.includes(city)
     );
-    
+
     if (province) {
       setSelectedProvinceId(province.province_id);
-      
-      // Fetch districts and wait for state update
-      try {
-        const res = await fetch(`https://vapi.vnappmob.com/api/v2/province/district/${province.province_id}`);
-        const data = await res.json();
-        
-        if (data.results) {
-          setDistricts(data.results);
-          
-          // Find matching district by name (normalize comparison)
-          const districtMatch = data.results.find((d: any) => {
-            const normalizedApiName = d.district_name.toLowerCase().trim();
-            const normalizedStoredName = district.toLowerCase().trim();
-            return normalizedApiName === normalizedStoredName || 
-                   normalizedApiName.includes(normalizedStoredName) ||
-                   normalizedStoredName.includes(normalizedApiName);
-          });
 
-          if (districtMatch) {
-            setSelectedDistrictId(districtMatch.district_id);
-            
-            // Fetch wards for the matched district
-            const wardRes = await fetch(`https://vapi.vnappmob.com/api/v2/province/ward/${districtMatch.district_id}`);
-            const wardData = await wardRes.json();
-            
-            if (wardData.results) {
-              setWards(wardData.results);
-              
-              // Find matching ward by name (normalize comparison)
-              const wardMatch = wardData.results.find((w: any) => {
-                const normalizedApiName = w.ward_name.toLowerCase().trim();
-                const normalizedStoredName = address.ward.toLowerCase().trim();
-                return normalizedApiName === normalizedStoredName || 
-                       normalizedApiName.includes(normalizedStoredName) ||
-                       normalizedStoredName.includes(normalizedApiName);
-              });
-              
-              // Set shipping info with matched names from API (ensures consistency)
-              setShippingInfo(prev => ({
-                ...prev,
-                fullName: address.name || user?.name || '',
-                phone: address.phone || user?.phone || '',
-                email: user?.email || '',
-                address: address.street,
-                city: province.province_name,
-                district: districtMatch.district_name,
-                ward: wardMatch ? wardMatch.ward_name : address.ward,
-              }));
-            }
-          } else {
-            // District not found - still set info but warn user
-            console.warn('District not found in API:', district);
-            setShippingInfo(prev => ({
-              ...prev,
-              fullName: address.name || user?.name || '',
-              phone: address.phone || user?.phone || '',
-              email: user?.email || '',
-              address: address.street,
-              city: province.province_name,
-              district: district,
-              ward: address.ward,
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Error loading address location data:', error);
-        toast.error('Không thể tải thông tin địa chỉ đầy đủ');
+      // Load districts from local data
+      const districtList = getDistricts(province.province_id);
+      setDistricts(districtList);
+
+      // Find matching district by name (normalize comparison)
+      const districtMatch = districtList.find((d: any) => {
+        const normalizedApiName = d.district_name.toLowerCase().trim();
+        const normalizedStoredName = district.toLowerCase().trim();
+        return normalizedApiName === normalizedStoredName ||
+          normalizedApiName.includes(normalizedStoredName) ||
+          normalizedStoredName.includes(normalizedApiName);
+      });
+
+      if (districtMatch) {
+        setSelectedDistrictId(districtMatch.district_id);
+
+        // Fetch wards for the matched district
+        const wardList = getWards(districtMatch.district_id);
+        setWards(wardList);
+
+        // Find matching ward by name (normalize comparison)
+        const wardMatch = wardList.find((w: any) => {
+          const normalizedApiName = w.ward_name.toLowerCase().trim();
+          const normalizedStoredName = address.ward.toLowerCase().trim();
+          return normalizedApiName === normalizedStoredName ||
+            normalizedApiName.includes(normalizedStoredName) ||
+            normalizedStoredName.includes(normalizedApiName);
+        });
+
+        // Set shipping info with matched names from API (ensures consistency)
+        setShippingInfo(prev => ({
+          ...prev,
+          fullName: address.name || user?.name || '',
+          phone: address.phone || user?.phone || '',
+          email: user?.email || '',
+          address: address.street,
+          city: province.province_name,
+          district: districtMatch.district_name,
+          ward: wardMatch ? wardMatch.ward_name : address.ward,
+        }));
+      } else {
+        // District not found - still set info but warn user
+        console.warn('District not found in API:', district);
+        setShippingInfo(prev => ({
+          ...prev,
+          fullName: address.name || user?.name || '',
+          phone: address.phone || user?.phone || '',
+          email: user?.email || '',
+          address: address.street,
+          city: province.province_name,
+          district: district,
+          ward: address.ward,
+        }));
       }
     } else {
       // Province not found - set basic info
@@ -244,7 +230,7 @@ const Checkout: React.FC = () => {
       }));
     }
   }, [provinces, user]);
-// Handle Address Change
+  // Handle Address Change
   const handleAddressChange = (name: keyof ShippingInfo, value: string) => {
     if (name === 'city') {
       const province = provinces.find(p => p.province_id === value);
@@ -480,12 +466,11 @@ const Checkout: React.FC = () => {
 
   // Load Provinces
   useEffect(() => {
-    const fetchProvinces = async () => {
+    const fetchProvinces = () => {
       setLoadingProvinces(true);
       try {
-        const res = await fetch('https://vapi.vnappmob.com/api/v2/province/');
-        const data = await res.json();
-        if (data.results) setProvinces(data.results);
+        const results = getProvinces();
+        setProvinces(results);
       } catch {
         toast.error('Lỗi tải danh sách tỉnh/thành!');
       } finally {
@@ -506,7 +491,7 @@ const Checkout: React.FC = () => {
       try {
         const addresses = await AddressApi.getAll();
         setSavedAddresses(addresses);
-        
+
         const defaultAddr = addresses.find((addr: Address) => addr.isDefault);
 
         if (defaultAddr) {
@@ -526,17 +511,17 @@ const Checkout: React.FC = () => {
       }
     };
 
-    if (provinces.length > 0) {
+    if (!loadingProvinces) {
       loadSavedAddresses();
     }
-  }, [user, provinces.length, loadAddressIntoForm]);
+  }, [user, loadingProvinces, loadAddressIntoForm]);
 
   // Show loading
   if (cartItems.length === 0 || loadingAddresses) {
     return (
       <div className="min-h-screen bg-white">
         <Header />
-        <main className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <main className="max-w-7xl mx-auto px-4 py-12 text-center">
           <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">Đang tải thông tin thanh toán...</p>
         </main>
@@ -572,8 +557,8 @@ const Checkout: React.FC = () => {
                   <h2 className="text-xl font-semibold">Thông tin giao hàng</h2>
                 </div>
                 {!isEditingAddress && (
-                  <button 
-                    onClick={handleStartEditing} 
+                  <button
+                    onClick={handleStartEditing}
                     className="text-purple-600 flex items-center gap-2 hover:text-purple-700 transition-colors"
                   >
                     <Edit className="h-4 w-4" /> Chỉnh sửa
@@ -591,7 +576,7 @@ const Checkout: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-gray-600" />
                       <span className="text-sm font-medium text-gray-700">
-                        {selectedAddressId 
+                        {selectedAddressId
                           ? `Địa chỉ đã chọn (${savedAddresses.find(a => a.id === selectedAddressId)?.isDefault ? 'Mặc định' : 'Đã lưu'})`
                           : 'Chọn địa chỉ có sẵn'}
                       </span>
@@ -605,9 +590,8 @@ const Checkout: React.FC = () => {
                         <button
                           key={addr.id}
                           onClick={() => handleSelectSavedAddress(addr.id)}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors ${
-                            selectedAddressId === addr.id ? 'bg-purple-50' : ''
-                          }`}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors ${selectedAddressId === addr.id ? 'bg-purple-50' : ''
+                            }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -640,7 +624,7 @@ const Checkout: React.FC = () => {
                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm mb-4 flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 flex-shrink-0" />
                   <span>
-                    {savedAddresses.find(a => a.id === selectedAddressId)?.isDefault 
+                    {savedAddresses.find(a => a.id === selectedAddressId)?.isDefault
                       ? 'Đang sử dụng địa chỉ mặc định của bạn'
                       : 'Đang sử dụng địa chỉ đã lưu'}
                   </span>
@@ -653,12 +637,12 @@ const Checkout: React.FC = () => {
                     <label className="block text-sm font-medium mb-2">Họ và tên *</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input 
-                        type="text" 
-                        value={shippingInfo.fullName} 
+                      <input
+                        type="text"
+                        value={shippingInfo.fullName}
                         onChange={e => handleAddressChange('fullName', e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2.5 border rounded-lg ${errors.fullName ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`} 
-                        placeholder="Nguyễn Văn A" 
+                        className={`w-full pl-10 pr-4 py-2.5 border rounded-lg ${errors.fullName ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                        placeholder="Nguyễn Văn A"
                       />
                       {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                     </div>
@@ -669,12 +653,12 @@ const Checkout: React.FC = () => {
                       <label className="block text-sm font-medium mb-2">Số điện thoại *</label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <input 
-                          type="tel" 
-                          value={shippingInfo.phone} 
+                        <input
+                          type="tel"
+                          value={shippingInfo.phone}
                           onChange={e => handleAddressChange('phone', e.target.value)}
-                          className={`w-full pl-10 pr-4 py-2.5 border rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`} 
-                          placeholder="0901234567" 
+                          className={`w-full pl-10 pr-4 py-2.5 border rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                          placeholder="0901234567"
                         />
                         {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                       </div>
@@ -683,12 +667,12 @@ const Checkout: React.FC = () => {
                       <label className="block text-sm font-medium mb-2">Email *</label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <input 
-                          type="email" 
-                          value={shippingInfo.email} 
+                        <input
+                          type="email"
+                          value={shippingInfo.email}
                           onChange={e => handleAddressChange('email', e.target.value)}
-                          className={`w-full pl-10 pr-4 py-2.5 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`} 
-                          placeholder="email@example.com" 
+                          className={`w-full pl-10 pr-4 py-2.5 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                          placeholder="email@example.com"
                         />
                         {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                       </div>
@@ -697,12 +681,12 @@ const Checkout: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">Địa chỉ chi tiết *</label>
-                    <input 
-                      type="text" 
-                      value={shippingInfo.address} 
+                    <input
+                      type="text"
+                      value={shippingInfo.address}
                       onChange={e => handleAddressChange('address', e.target.value)}
-                      className={`w-full px-4 py-2.5 border rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`} 
-                      placeholder="Số nhà, tên đường..." 
+                      className={`w-full px-4 py-2.5 border rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                      placeholder="Số nhà, tên đường..."
                     />
                     {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                   </div>
@@ -710,8 +694,8 @@ const Checkout: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">Tỉnh/Thành phố *</label>
-                      <select 
-                        value={selectedProvinceId} 
+                      <select
+                        value={selectedProvinceId}
                         onChange={e => handleAddressChange('city', e.target.value)}
                         disabled={loadingProvinces}
                         className={`w-full px-4 py-2.5 border rounded-lg ${errors.city ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
@@ -726,8 +710,8 @@ const Checkout: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2">Quận/Huyện *</label>
-                      <select 
-                        value={selectedDistrictId} 
+                      <select
+                        value={selectedDistrictId}
                         onChange={e => handleAddressChange('district', e.target.value)}
                         disabled={!selectedProvinceId || loadingDistricts}
                         className={`w-full px-4 py-2.5 border rounded-lg ${errors.district ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
@@ -742,7 +726,7 @@ const Checkout: React.FC = () => {
 
                     <div>
                       <label className="block text-sm font-medium mb-2">Phường/Xã *</label>
-                      <select 
+                      <select
                         value={wards.find(w => w.ward_name === shippingInfo.ward)?.ward_id || ''}
                         onChange={e => handleAddressChange('ward', e.target.value)}
                         disabled={!selectedDistrictId || loadingWards}
@@ -759,23 +743,23 @@ const Checkout: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium mb-2">Ghi chú (không bắt buộc)</label>
-                    <textarea 
-                      value={shippingInfo.note} 
+                    <textarea
+                      value={shippingInfo.note}
                       onChange={e => handleAddressChange('note', e.target.value)}
-                      rows={3} 
+                      rows={3}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      placeholder="Ghi chú về thời gian giao hàng..." 
+                      placeholder="Ghi chú về thời gian giao hàng..."
                     />
                   </div>
 
                   <div className="flex gap-3">
-                    <button 
+                    <button
                       onClick={handleCancelEditing}
                       className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-lg font-medium transition-colors"
                     >
                       Hủy
                     </button>
-                    <button 
+                    <button
                       onClick={handleSaveAddress}
                       className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium transition-colors"
                     >
@@ -812,9 +796,8 @@ const Checkout: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  shippingMethod === 'standard' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${shippingMethod === 'standard' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -838,9 +821,8 @@ const Checkout: React.FC = () => {
                   <span className="font-semibold text-gray-900">{formatPrice(shippingFees.standard)}</span>
                 </label>
 
-                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  shippingMethod === 'express' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${shippingMethod === 'express' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -881,9 +863,8 @@ const Checkout: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  paymentMethod === 'cod' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'cod' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -904,9 +885,8 @@ const Checkout: React.FC = () => {
                   <Shield className="h-5 w-5 text-green-600" />
                 </label>
 
-                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  paymentMethod === 'bank_transfer' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'bank_transfer' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -927,9 +907,8 @@ const Checkout: React.FC = () => {
                   <Shield className="h-5 w-5 text-green-600" />
                 </label>
 
-                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  paymentMethod === 'e_wallet' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
-                }`}>
+                <label className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-all ${paymentMethod === 'e_wallet' ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-gray-300'
+                  }`}>
                   <div className="flex items-center gap-3">
                     <input
                       type="radio"
@@ -1054,9 +1033,8 @@ const Checkout: React.FC = () => {
             <button
               onClick={handlePlaceOrder}
               disabled={isSubmitting}
-              className={`w-full mt-6 py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2 transition-colors ${
-                isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-              }`}
+              className={`w-full mt-6 py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2 transition-colors ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                }`}
             >
               {isSubmitting ? (
                 <>

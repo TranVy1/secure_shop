@@ -62,11 +62,11 @@ export default function ChatPanel({ onClose, fullscreen }: { onClose?: () => voi
         <div className="flex items-center gap-2">
           {fullscreen ? (
             <button onClick={onClose} className="mr-1 rounded-md p-1.5 hover:bg-white/10 transition" aria-label="Đóng">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M6 6l12 12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 18L18 6M6 6l12 12" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
             </button>
           ) : null}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v9H7l-3 3V5z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <div className="font-semibold">Trợ lý SecureShop</div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v9H7l-3 3V5z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <div className="font-semibold">Trợ lý Security Shop</div>
         </div>
         <div className="text-xs opacity-90">Hỏi về chính sách, đặt hàng, sản phẩm phù hợp…</div>
       </div>
@@ -86,14 +86,14 @@ export default function ChatPanel({ onClose, fullscreen }: { onClose?: () => voi
                         {p.thumbnailUrl ? (
                           <img className="w-full h-full object-cover" src={p.thumbnailUrl} alt={p.name} />
                         ) : (
-                          <svg width="24" height="24" viewBox="0 0 24 24" className="text-gray-400"><path d="M4 6h16v12H4z" fill="currentColor"/></svg>
+                          <svg width="24" height="24" viewBox="0 0 24 24" className="text-gray-400"><path d="M4 6h16v12H4z" fill="currentColor" /></svg>
                         )}
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-medium line-clamp-2">{p.name}</div>
                         {p.price && <div className="text-xs text-emerald-600 font-semibold">{typeof p.price === "number" ? p.price.toLocaleString("vi-VN") + "₫" : p.price}</div>}
                       </div>
-                      <svg width="18" height="18" viewBox="0 0 24 24" className="text-gray-400 group-hover:text-gray-600 transition"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <svg width="18" height="18" viewBox="0 0 24 24" className="text-gray-400 group-hover:text-gray-600 transition"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </a>
                   ))}
                 </div>
@@ -160,7 +160,7 @@ export default function ChatPanel({ onClose, fullscreen }: { onClose?: () => voi
             aria-label="Gửi"
             title="Gửi"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12l14-7-6 7 6 7-14-7z" fill="currentColor"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12l14-7-6 7 6 7-14-7z" fill="currentColor" /></svg>
             Gửi
           </button>
         </form>

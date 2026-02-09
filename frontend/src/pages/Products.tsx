@@ -57,7 +57,7 @@ const Products: React.FC = () => {
   // === Stock filter state ===
   const [stockFilter, setStockFilter] = useState<
     "all" | "inStock" | "outOfStock"
-  >("all");
+  >("inStock");
 
   // === Show all categories/brands ===
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -123,7 +123,7 @@ const Products: React.FC = () => {
         ]);
         setBrands([{ id: 0, name: "Tất cả" }, ...(brandsRes?.content ?? [])]);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingFilters(false));
   }, []);
 
@@ -324,21 +324,19 @@ const Products: React.FC = () => {
               <div className="hidden sm:flex border border-gray-300 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 ${
-                    viewMode === "grid"
+                  className={`p-2 ${viewMode === "grid"
                       ? "bg-purple-600 text-white"
                       : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <Grid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 ${
-                    viewMode === "list"
+                  className={`p-2 ${viewMode === "list"
                       ? "bg-purple-600 text-white"
                       : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <List className="h-4 w-4" />
                 </button>
@@ -351,9 +349,8 @@ const Products: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters with Scrollbar */}
           <aside
-            className={`w-full lg:w-64 flex-shrink-0 ${
-              showFilters ? "block" : "hidden lg:block"
-            }`}
+            className={`w-full lg:w-64 flex-shrink-0 ${showFilters ? "block" : "hidden lg:block"
+              }`}
           >
             <div className="bg-white rounded-lg shadow-sm sticky top-4 max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-100 hover:scrollbar-thumb-purple-500">
               <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
@@ -380,11 +377,10 @@ const Products: React.FC = () => {
                           <button
                             key={category.id}
                             onClick={() => handleCategoryChange(category.id)}
-                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                              selectedCategory === category.id
+                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${selectedCategory === category.id
                                 ? "bg-purple-100 text-purple-600 font-medium"
                                 : "text-gray-600 hover:bg-gray-50"
-                            }`}
+                              }`}
                           >
                             {category.name}
                           </button>
@@ -437,11 +433,10 @@ const Products: React.FC = () => {
                           <button
                             key={brand.id}
                             onClick={() => handleBrandChange(brand.id)}
-                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                              selectedBrand === brand.id
+                            className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${selectedBrand === brand.id
                                 ? "bg-purple-100 text-purple-600 font-medium"
                                 : "text-gray-600 hover:bg-gray-50"
-                            }`}
+                              }`}
                           >
                             {brand.name}
                           </button>
@@ -526,31 +521,28 @@ const Products: React.FC = () => {
                   <div className="space-y-2">
                     <button
                       onClick={() => handleStockFilterChange("all")}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                        stockFilter === "all"
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${stockFilter === "all"
                           ? "bg-purple-100 text-purple-600 font-medium"
                           : "text-gray-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       Tất cả
                     </button>
                     <button
                       onClick={() => handleStockFilterChange("inStock")}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                        stockFilter === "inStock"
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${stockFilter === "inStock"
                           ? "bg-purple-100 text-purple-600 font-medium"
                           : "text-gray-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       Còn hàng
                     </button>
                     <button
                       onClick={() => handleStockFilterChange("outOfStock")}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
-                        stockFilter === "outOfStock"
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${stockFilter === "outOfStock"
                           ? "bg-purple-100 text-purple-600 font-medium"
                           : "text-gray-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       Hết hàng
                     </button>
@@ -599,11 +591,10 @@ const Products: React.FC = () => {
                   ) : (
                     <>
                       <div
-                        className={`grid gap-4 sm:gap-6 ${
-                          viewMode === "grid"
+                        className={`grid gap-4 sm:gap-6 ${viewMode === "grid"
                             ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                             : "grid-cols-1"
-                        }`}
+                          }`}
                       >
                         {products.map((product, index) => (
                           <motion.div

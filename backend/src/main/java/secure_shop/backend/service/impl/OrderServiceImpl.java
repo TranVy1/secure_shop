@@ -374,21 +374,37 @@ public class OrderServiceImpl implements OrderService {
 
         // Check payment method
         Payment payment = order.getPayment();
-        boolean isCOD = payment != null && payment.getMethod() == PaymentMethod.COD;
 
         // Update status
         order.setStatus(newStatus);
 
-        // For COD payment: if status is DELIVERED, update payment-related fields
-        if (isCOD && newStatus == OrderStatus.DELIVERED) {
-            order.setHasPaid(true);
-            order.setPaymentStatus(secure_shop.backend.enums.PaymentStatus.PAID);
+        // If status is DELIVERED, ensure order is considered PAID (for all payment methods)
+        if (newStatus == OrderStatus.DELIVERED) {
+            if (!Boolean.TRUE.equals(order.getHasPaid())) {
+                order.setHasPaid(true);
+                order.setPaymentStatus(secure_shop.backend.enums.PaymentStatus.PAID);
+            }
+            
             if (order.getConfirmedAt() == null) {
                 order.setConfirmedAt(Instant.now());
             }
-            // Also update payment entity status
-            payment.setStatus(secure_shop.backend.enums.PaymentStatus.PAID);
-            payment.setPaidAt(Instant.now());
+
+            // Also update payment entity status if exists
+            if (payment != null) {
+                if (payment.getStatus() != secure_shop.backend.enums.PaymentStatus.PAID) {
+                    payment.setStatus(secure_shop.backend.enums.PaymentStatus.PAID);
+                }
+                if (payment.getPaidAt() == null) {
+                    payment.setPaidAt(Instant.now());
+                }
+            }
+            
+            // Send thank you email
+            try {
+                emailService.sendThankYouEmail(order);
+            } catch (Exception e) {
+                // Log and ignore email error
+            }
         }
 
         Order updatedOrder = orderRepository.save(order);

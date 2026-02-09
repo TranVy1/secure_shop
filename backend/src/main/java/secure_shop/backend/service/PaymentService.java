@@ -3,6 +3,7 @@ package secure_shop.backend.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import secure_shop.backend.dto.order.PaymentDTO;
+import secure_shop.backend.dto.payment.MockPaymentRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,5 +24,7 @@ public interface PaymentService {
     PaymentDTO getPaymentByOrderId(UUID orderId);
 
     PaymentDTO markAsPaid(UUID id);
+
+    PaymentDTO processMockPayment(MockPaymentRequest request);
 }
 

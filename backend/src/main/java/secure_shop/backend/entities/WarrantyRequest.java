@@ -37,7 +37,7 @@ public class WarrantyRequest {
     private String issueType;
 
     @Size(max = 2000, message = "Mô tả sự cố tối đa 2000 ký tự")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @NotNull(message = "Trạng thái yêu cầu bảo hành không được để trống")

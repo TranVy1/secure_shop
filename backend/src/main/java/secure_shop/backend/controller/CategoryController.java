@@ -42,13 +42,13 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CategoryDTO> create(@RequestBody CategoryDTO dto) {
+    public ResponseEntity<CategoryDTO> create(@RequestBody @jakarta.validation.Valid CategoryDTO dto) {
         return ResponseEntity.ok(categoryService.create(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<CategoryDTO> update(@PathVariable Long id, @RequestBody CategoryDTO dto) {
+    public ResponseEntity<CategoryDTO> update(@PathVariable Long id, @RequestBody @jakarta.validation.Valid CategoryDTO dto) {
         return ResponseEntity.ok(categoryService.update(id, dto));
     }
 

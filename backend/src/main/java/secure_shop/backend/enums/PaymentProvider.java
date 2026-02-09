@@ -1,7 +1,8 @@
 package secure_shop.backend.enums;
 
 public enum PaymentProvider {
-    MOMO,
-    VNPAY,
-    NONE
+    COD, // Cash On Delivery - Thanh toán khi nhận hàng
+    MOMO, // MoMo E-Wallet
+    VNPAY, // VNPay Payment Gateway
+    NONE // No payment provider (placeholder)
 }

@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import secure_shop.backend.config.security.CustomUserDetails;
 import secure_shop.backend.dto.order.PaymentDTO;
+import secure_shop.backend.dto.payment.MockPaymentRequest;
 import secure_shop.backend.service.PaymentService;
 
 import java.util.UUID;
@@ -65,6 +66,12 @@ public class PaymentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PaymentDTO> markAsPaid(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.markAsPaid(id));
+    }
+
+    @PostMapping("/mock-success")
+    @PreAuthorize("isAuthenticated()") // Allow any authenticated user to mock payment in sandbox
+    public ResponseEntity<PaymentDTO> mockPaymentSuccess(@RequestBody MockPaymentRequest request) {
+        return ResponseEntity.ok(paymentService.processMockPayment(request));
     }
 }
 

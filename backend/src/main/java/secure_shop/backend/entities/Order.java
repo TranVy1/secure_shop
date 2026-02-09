@@ -16,15 +16,12 @@ import java.util.Set;
 import java.util.Objects;
 
 @Entity
-@Table(
-        name = "orders",
-        indexes = {
-                @Index(name = "idx_orders_user", columnList = "user_id"),
-                @Index(name = "idx_orders_status", columnList = "status"),
-                @Index(name = "idx_orders_payment_status", columnList = "payment_status"),
-                @Index(name = "idx_orders_created_at", columnList = "created_at")
-        }
-)
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_orders_user", columnList = "user_id"),
+        @Index(name = "idx_orders_status", columnList = "status"),
+        @Index(name = "idx_orders_payment_status", columnList = "payment_status"),
+        @Index(name = "idx_orders_created_at", columnList = "created_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -62,7 +59,7 @@ public class Order extends BaseEntity {
     private Boolean hasPaid = false;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb", nullable = false)
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
     @Builder.Default
     private Map<String, String> shippingAddress = new HashMap<>();
 
@@ -96,8 +93,10 @@ public class Order extends BaseEntity {
             this.subTotal = BigDecimal.ZERO;
         }
 
-        if (discountTotal == null) discountTotal = BigDecimal.ZERO;
-        if (shippingFee == null) shippingFee = BigDecimal.ZERO;
+        if (discountTotal == null)
+            discountTotal = BigDecimal.ZERO;
+        if (shippingFee == null)
+            shippingFee = BigDecimal.ZERO;
 
         this.grandTotal = subTotal.subtract(discountTotal).add(shippingFee);
     }

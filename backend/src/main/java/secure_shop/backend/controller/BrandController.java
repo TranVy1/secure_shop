@@ -28,13 +28,13 @@ public class BrandController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BrandDTO> createBrand(@RequestBody BrandDTO dto) {
+    public ResponseEntity<BrandDTO> createBrand(@RequestBody @jakarta.validation.Valid BrandDTO dto) {
         return ResponseEntity.ok(brandService.createBrand(dto));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BrandDTO> updateBrand(@PathVariable Long id, @RequestBody BrandDTO dto) {
+    public ResponseEntity<BrandDTO> updateBrand(@PathVariable Long id, @RequestBody @jakarta.validation.Valid BrandDTO dto) {
         return ResponseEntity.ok(brandService.updateBrand(id, dto));
     }
 

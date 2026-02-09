@@ -16,7 +16,7 @@ const Terms: React.FC = () => {
       id: 'acceptance',
       title: '1. Chấp Nhận Điều Khoản',
       icon: CheckCircle,
-      content: 'Khi truy cập và sử dụng trang web SecureShop, bạn xác nhận rằng bạn đã đọc, hiểu và đồng ý bị ràng buộc bởi các điều khoản này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản, vui lòng không sử dụng dịch vụ của chúng tôi.'
+      content: 'Khi truy cập và sử dụng trang web Security Shop, bạn xác nhận rằng bạn đã đọc, hiểu và đồng ý bị ràng buộc bởi các điều khoản này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản, vui lòng không sử dụng dịch vụ của chúng tôi.'
     },
     {
       id: 'account',
@@ -55,7 +55,7 @@ const Terms: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="relative h-[300px] bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -78,7 +78,7 @@ const Terms: React.FC = () => {
       </section>
 
       {/* Introduction */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -89,8 +89,8 @@ const Terms: React.FC = () => {
           >
             <div className="bg-white border-l-4 border-purple-600 p-8 rounded-r-lg shadow-md">
               <p className="text-lg text-gray-700 leading-relaxed">
-                Chào mừng bạn đến với SecureShop. Bằng việc truy cập và sử dụng website của chúng tôi, 
-                bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu dưới đây. Vui lòng đọc kỹ 
+                Chào mừng bạn đến với Security Shop. Bằng việc truy cập và sử dụng website của chúng tôi,
+                bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu dưới đây. Vui lòng đọc kỹ
                 các điều khoản này trước khi sử dụng dịch vụ.
               </p>
             </div>
@@ -99,14 +99,14 @@ const Terms: React.FC = () => {
       </section>
 
       {/* Quick Links */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8"
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Nội Dung Chính</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
@@ -140,7 +140,7 @@ const Terms: React.FC = () => {
       </section>
 
       {/* Main Content Sections */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-12">
             {sections.map((section, index) => {
@@ -162,9 +162,9 @@ const Terms: React.FC = () => {
                       <h2 className="text-2xl font-bold text-zinc-800">{section.title}</h2>
                     </div>
                   </div>
-                  
+
                   <p className="text-gray-700 mb-4 leading-relaxed">{section.content}</p>
-                  
+
                   {section.list && (
                     <ul className="space-y-3">
                       {section.list.map((item, i) => (
@@ -223,7 +223,7 @@ const Terms: React.FC = () => {
             <div className="bg-white p-8 rounded-lg shadow-md">
               <h2 className="text-2xl font-bold text-zinc-800 mb-4">7. Giới Hạn Trách Nhiệm</h2>
               <div className="space-y-4 text-gray-700">
-                <p>Trong phạm vi tối đa được pháp luật cho phép, SecureShop sẽ không chịu trách nhiệm về bất kỳ thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả nào phát sinh từ việc sử dụng dịch vụ.</p>
+                <p>Trong phạm vi tối đa được pháp luật cho phép, Security Shop sẽ không chịu trách nhiệm về bất kỳ thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả nào phát sinh từ việc sử dụng dịch vụ.</p>
               </div>
             </div>
           </motion.div>
@@ -231,7 +231,7 @@ const Terms: React.FC = () => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -245,7 +245,7 @@ const Terms: React.FC = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <div>
                 <p className="font-semibold mb-1">Email</p>
-                <a href="mailto:support@secureshop.vn" className="hover:underline">support@secureshop.vn</a>
+                <a href="mailto:support@securityshop.vn" className="hover:underline">support@securityshop.vn</a>
               </div>
               <div>
                 <p className="font-semibold mb-1">Điện thoại</p>
@@ -253,7 +253,7 @@ const Terms: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold mb-1">Địa chỉ</p>
-                <p>123 Đường ABC, Quận 1, TP.HCM</p>
+                <p>Tòa nhà FPT Polytechnic, Phố Trịnh Văn Bô, Nam Từ Liêm, Hà Nội</p>
               </div>
             </div>
           </motion.div>
@@ -261,7 +261,7 @@ const Terms: React.FC = () => {
       </section>
 
       {/* Footer CTA */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -270,7 +270,7 @@ const Terms: React.FC = () => {
             viewport={{ once: true }}
           >
             <p className="text-lg text-gray-600 mb-6">
-              Bằng cách sử dụng SecureShop, bạn xác nhận đã đọc và đồng ý với các điều khoản này.
+              Bằng cách sử dụng Security Shop, bạn xác nhận đã đọc và đồng ý với các điều khoản này.
             </p>
             <Link
               to="/privacy"

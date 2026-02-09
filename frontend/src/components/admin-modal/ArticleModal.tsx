@@ -60,6 +60,17 @@ const ArticleModal: React.FC<ArticleModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const generateSlug = (str: string) => {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -73,6 +84,8 @@ const ArticleModal: React.FC<ArticleModalProps> = ({
       const articleData = {
         title: formData.title.trim(),
         content: formData.content.trim(),
+        slug: generateSlug(formData.title),
+        summary: formData.content.length > 200 ? formData.content.substring(0, 200) + '...' : formData.content,
         active: formData.active,
       };
 

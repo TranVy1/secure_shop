@@ -4,20 +4,37 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import Footer from '../components/Footer';
 import Header from '../components/Header';
+import { SupportTicketApi } from '../utils/api';
+import { useAppSelector } from '../hooks';
 
 const Contact: React.FC = () => {
 
   useEffect(() => {
-      window.scrollTo(0, 0);
-    }, []);
-  
+    window.scrollTo(0, 0);
+  }, []);
+
+  const { user } = useAppSelector((state) => state.auth);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    title: '',
     subject: '',
     message: ''
   });
+
+  // Auto-fill user info if logged in
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      }));
+    }
+  }, [user]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,8 +42,8 @@ const Contact: React.FC = () => {
     {
       icon: MapPin,
       title: 'Địa chỉ',
-      content: 'số 4 Nguyễn Văn Bảo, Quận Gò Vấp, TP.HCM',
-      link: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15677.67118362639!2d106.69748834771095!3d10.77885823150119!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f38f9ed887b%3A0x14aded570933994a!2zQ2jhu6MgQuG6v24gVGjDoG5o!5e0!3m2!1svi!2s!4v1678888888888!5m2!1svi!2s'
+      content: 'Tòa nhà FPT Polytechnic, Phố Trịnh Văn Bô, Xuân Phương, Nam Từ Liêm, Hà Nội',
+      link: 'https://maps.app.goo.gl/KeS7v7y5Fk3Yw7z67'
     },
     {
       icon: Phone,
@@ -37,8 +54,8 @@ const Contact: React.FC = () => {
     {
       icon: Mail,
       title: 'Email',
-      content: 'contact@secureshop.vn',
-      link: 'mailto:contact@secureshop.vn'
+      content: 'contact@securityshop.vn',
+      link: 'mailto:contact@securityshop.vn'
     },
     {
       icon: Clock,
@@ -96,34 +113,51 @@ const Contact: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.MouseEvent) => {
+  const handleSubmit = async (e: React.MouseEvent) => {
     e.preventDefault();
-    
+
     // Validate form
-    if (!formData.name || !formData.email || !formData.message) {
+    if (!formData.name || !formData.email || !formData.message || !formData.title || !formData.subject) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc!');
+      return;
+    }
+
+    if (!user) {
+      toast.info('Vui lòng đăng nhập để gửi yêu cầu hỗ trợ! Chúng tôi cần tài khoản để theo dõi xử lý yêu cầu của bạn.');
       return;
     }
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Gửi tin nhắn thành công! Chúng tôi sẽ liên hệ với bạn sớm nhất.');
+    try {
+      await SupportTicketApi.createTicket({
+        title: formData.title,
+        subject: formData.subject,
+        content: formData.message
+      });
+
+      toast.success('Gửi yêu cầu hỗ trợ thành công! Chúng tôi sẽ phản hồi sớm nhất.');
+
+      // Reset form but keep user info
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        title: '',
         subject: '',
         message: ''
       });
+    } catch (error) {
+      console.error(error);
+      toast.error('Gửi yêu cầu thất bại. Vui lòng thử lại sau.');
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white">
-        <Header />
+      <Header />
       {/* Hero Section */}
       <section className="relative h-[300px] bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -143,7 +177,7 @@ const Contact: React.FC = () => {
       </section>
 
       {/* Contact Info Cards */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {contactInfo.map((info, index) => {
@@ -162,7 +196,7 @@ const Contact: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-800 mb-2">{info.title}</h3>
                   {info.link ? (
-                    <a 
+                    <a
                       href={info.link}
                       className="text-gray-600 hover:text-purple-600 transition-colors"
                     >
@@ -179,7 +213,7 @@ const Contact: React.FC = () => {
       </section>
 
       {/* Contact Form & Map Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
@@ -189,7 +223,7 @@ const Contact: React.FC = () => {
               transition={{ duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-bold text-zinc-800 mb-6">Gửi Tin Nhắn Cho Chúng Tôi</h2>
+              <h2 className="text-3xl font-bold text-zinc-800 mb-6">Gửi Yêu Cầu Hỗ Trợ (Ticket)</h2>
               <div className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -199,9 +233,10 @@ const Contact: React.FC = () => {
                     type="text"
                     id="name"
                     name="name"
+                    disabled={!!user}
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className={`w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${user ? 'bg-gray-100' : ''}`}
                     placeholder="Nhập họ và tên của bạn"
                   />
                 </div>
@@ -215,9 +250,10 @@ const Contact: React.FC = () => {
                       type="email"
                       id="email"
                       name="email"
+                      disabled={!!user}
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className={`w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${user ? 'bg-gray-100' : ''}`}
                       placeholder="email@example.com"
                     />
                   </div>
@@ -230,31 +266,47 @@ const Contact: React.FC = () => {
                       type="tel"
                       id="phone"
                       name="phone"
+                      disabled={!!user}
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className={`w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${user ? 'bg-gray-100' : ''}`}
                       placeholder="0123 456 789"
                     />
                   </div>
                 </div>
 
                 <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                    Tiêu đề <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Tóm tắt vấn đề của bạn..."
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Chủ đề
+                    Chủ đề <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="subject"
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="">Chọn chủ đề</option>
-                    <option value="product">Tư vấn sản phẩm</option>
-                    <option value="support">Hỗ trợ kỹ thuật</option>
-                    <option value="warranty">Bảo hành</option>
-                    <option value="partnership">Hợp tác kinh doanh</option>
-                    <option value="other">Khác</option>
+                    <option value="Tư vấn sản phẩm">Tư vấn sản phẩm</option>
+                    <option value="Hỗ trợ kỹ thuật">Hỗ trợ kỹ thuật</option>
+                    <option value="Bảo hành">Bảo hành</option>
+                    <option value="Hợp tác kinh doanh">Hợp tác kinh doanh</option>
+                    <option value="Khác">Khác</option>
                   </select>
                 </div>
 
@@ -268,7 +320,7 @@ const Contact: React.FC = () => {
                     value={formData.message}
                     onChange={handleInputChange}
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                     placeholder="Nhập nội dung tin nhắn của bạn..."
                   ></textarea>
                 </div>
@@ -276,7 +328,7 @@ const Contact: React.FC = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full max-w-xl bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
@@ -286,7 +338,7 @@ const Contact: React.FC = () => {
                   ) : (
                     <>
                       <Send className="h-5 w-5" />
-                      <span>Gửi Tin Nhắn</span>
+                      <span>Gửi Yêu Cầu</span>
                     </>
                   )}
                 </button>
@@ -301,10 +353,10 @@ const Contact: React.FC = () => {
               viewport={{ once: true }}
               className="space-y-6"
             >
-              <div className="bg-gray-100 rounded-lg overflow-hidden h-80 md:h-[400px]">
-                <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.857610747833!2d106.69723331526601!3d10.82220546130835!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317528e54e1837c7%3A0x203d789126e85848!2zVHLGsOG7nW5nIMSQ4bqhaSBo4buNYyBDw7RuZyBuZ2hp4buHcCBULSBDaGkgTmjDoW5oIFRwLkjDtSBDaMOtIE1pbmg!5e0!3m2!1svi!2s!4v1678888888888!5m2!1svi!2s" 
-                  loading="lazy" 
+              <div className="bg-gray-100 rounded-lg overflow-hidden h-80 lg:h-[500px]">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.8639810443356!2d105.7445984147635!3d21.038127792834645!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135cab158d234d7%3A0x69666249a0d81b83!2zVHLGsOG7nW5nIENhbyDEkS4gRlBUIFBo4buvIFRo4buLIC0gSMOgIE7hu5lp!5e0!3m2!1svi!2s!4v1678888888888!5m2!1svi!2s"
+                  loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                   className="w-full h-full border-0"
                 ></iframe>
@@ -351,7 +403,7 @@ const Contact: React.FC = () => {
       </section>
 
       {/* Branches Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -362,7 +414,7 @@ const Contact: React.FC = () => {
           >
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">Hệ Thống Chi Nhánh</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              SecureShop có mặt tại các thành phố lớn trên cả nước
+              Security Shop có mặt tại các thành phố lớn trên cả nước
             </p>
           </motion.div>
 
@@ -403,7 +455,7 @@ const Contact: React.FC = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -437,7 +489,7 @@ const Contact: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-purple-600 to-cyan-500 text-white">
+      <section className="py-12 bg-gradient-to-r from-purple-600 to-cyan-500 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

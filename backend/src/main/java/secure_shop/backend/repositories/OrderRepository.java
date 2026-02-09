@@ -21,21 +21,22 @@ import java.util.UUID;
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query("""
-    SELECT DISTINCT o FROM Order o
-    LEFT JOIN FETCH o.orderItems
-    LEFT JOIN FETCH o.payment
-    LEFT JOIN FETCH o.shipment
-    LEFT JOIN FETCH o.discount
-    WHERE o.user.id = :userId
-""")
+                SELECT DISTINCT o FROM Order o
+                LEFT JOIN FETCH o.orderItems
+                LEFT JOIN FETCH o.payment
+                LEFT JOIN FETCH o.shipment
+                LEFT JOIN FETCH o.discount
+                WHERE o.user.id = :userId
+            """)
     List<Order> findByUserId(@Param("userId") UUID userId);
 
     Integer countByDiscountIdAndUserId(UUID discountId, UUID userId);
 
     Integer countOrdersByCreatedAtIsNotNull();
 
-    //get all orders sorted by createdAt desc
-    @Query("SELECT o FROM Order o ORDER BY o.createdAt DESC")
+    // Get all orders - sorting handled by Pageable to avoid duplicate ORDER BY
+    // columns
+    @Query("SELECT o FROM Order o")
     Page<Order> findAllOrdersSortedByCreatedAtDesc(Pageable pageable);
 
     // Analytics queries
@@ -46,8 +47,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     BigDecimal calculateTotalRevenue(
             @Param("startDate") Instant startDate,
             @Param("endDate") Instant endDate,
-            @Param("paymentStatus") PaymentStatus paymentStatus
-    );
+            @Param("paymentStatus") PaymentStatus paymentStatus);
 
     @Query("SELECT COUNT(o) FROM Order o " +
             "WHERE o.status = :status " +
@@ -55,15 +55,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Long countByStatusAndCreatedAtBetween(
             @Param("status") OrderStatus status,
             @Param("startDate") Instant startDate,
-            @Param("endDate") Instant endDate
-    );
+            @Param("endDate") Instant endDate);
 
     @Query("SELECT COUNT(o) FROM Order o " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate")
     Long countByCreatedAtBetween(
             @Param("startDate") Instant startDate,
-            @Param("endDate") Instant endDate
-    );
+            @Param("endDate") Instant endDate);
 
     @Query("SELECT COALESCE(AVG(o.grandTotal), 0) FROM Order o " +
             "WHERE o.status = :status " +
@@ -71,23 +69,21 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     BigDecimal calculateAvgOrderValue(
             @Param("status") OrderStatus status,
             @Param("startDate") Instant startDate,
-            @Param("endDate") Instant endDate
-    );
+            @Param("endDate") Instant endDate);
 
     /**
      * Get daily revenue and order count statistics
      * Returns: [date, totalRevenue, orderCount]
      */
-    @Query("SELECT FUNCTION('DATE', o.createdAt), COALESCE(SUM(o.grandTotal), 0), COUNT(o) " +
+    @Query("SELECT CAST(o.createdAt AS DATE), COALESCE(SUM(o.grandTotal), 0), COUNT(o) " +
             "FROM Order o " +
             "WHERE o.paymentStatus = :paymentStatus " +
             "AND o.hasPaid = true " +
             "AND o.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY FUNCTION('DATE', o.createdAt) " +
-            "ORDER BY FUNCTION('DATE', o.createdAt)")
+            "GROUP BY CAST(o.createdAt AS DATE) " +
+            "ORDER BY CAST(o.createdAt AS DATE)")
     List<Object[]> getDailyRevenueStats(
             @Param("startDate") Instant startDate,
             @Param("endDate") Instant endDate,
-            @Param("paymentStatus") PaymentStatus paymentStatus
-    );
+            @Param("paymentStatus") PaymentStatus paymentStatus);
 }

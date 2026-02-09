@@ -11,19 +11,16 @@ import java.time.Instant;
 import java.util.*;
 
 @Entity
-@Table(
-        name = "products",
-        indexes = {
-                @Index(name = "idx_products_sku", columnList = "sku"),
-                @Index(name = "idx_products_active", columnList = "active"),
-                @Index(name = "idx_products_category", columnList = "category_id"),
-                @Index(name = "idx_products_brand", columnList = "brand_id"),
-                @Index(name = "idx_products_name", columnList = "name"),
-                @Index(name = "idx_products_listed_price", columnList = "listed_price"),
-                @Index(name = "idx_products_price", columnList = "price")
-        }
-)
-@SQLDelete(sql = "UPDATE products SET deleted_at = now(), active = false WHERE id = ?")
+@Table(name = "products", indexes = {
+        @Index(name = "idx_products_sku", columnList = "sku"),
+        @Index(name = "idx_products_active", columnList = "active"),
+        @Index(name = "idx_products_category", columnList = "category_id"),
+        @Index(name = "idx_products_brand", columnList = "brand_id"),
+        @Index(name = "idx_products_name", columnList = "name"),
+        @Index(name = "idx_products_listed_price", columnList = "listed_price"),
+        @Index(name = "idx_products_price", columnList = "price")
+})
+@SQLDelete(sql = "UPDATE products SET deleted_at = GETDATE(), active = 0 WHERE id = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
@@ -34,28 +31,22 @@ public class Product extends BaseEntity {
 
     @NotBlank(message = "Mã SKU không được để trống")
     @Size(max = 100, message = "Mã SKU tối đa 100 ký tự")
-    @Pattern(
-            regexp = "^[A-Za-z0-9\\-_.]+$",
-            message = "Mã SKU chỉ được chứa chữ, số và các ký tự '-', '_', '.'"
-    )
+    @Pattern(regexp = "^[A-Za-z0-9\\-_.]+$", message = "Mã SKU chỉ được chứa chữ, số và các ký tự '-', '_', '.'")
     @Column(nullable = false, unique = true, length = 50)
     private String sku;
 
     @NotBlank(message = "Tên sản phẩm không được để trống")
     @Size(max = 255, message = "Tên sản phẩm tối đa 255 ký tự")
-    @Pattern(
-            regexp = "^[\\p{L}0-9 .,'&\\-()]+$",
-            message = "Tên sản phẩm chỉ được chứa chữ cái, số và các ký tự hợp lệ như . , ' & - ( )"
-    )
+    @Pattern(regexp = "^[\\p{L}0-9 .,'&\\-()]+$", message = "Tên sản phẩm chỉ được chứa chữ cái, số và các ký tự hợp lệ như . , ' & - ( )")
     @Column(nullable = false, length = 500)
     private String name;
 
     @Size(max = 500, message = "Mô tả ngắn tối đa 500 ký tự")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String shortDesc;
 
     @Size(max = 5000, message = "Mô tả chi tiết tối đa 5000 ký tự")
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String longDesc;
 
     @NotNull(message = "Giá niêm yết không được để trống")

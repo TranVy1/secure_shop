@@ -53,7 +53,7 @@ public class User extends BaseEntity {
             regexp = "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/.*)?$",
             message = "URL ảnh đại diện không hợp lệ"
     )
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String avatarUrl;
 
     @Pattern(regexp = "local|google|facebook", message = "Provider không hợp lệ")
@@ -83,4 +83,19 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<Address> addresses = new HashSet<>();
+
+    @PrePersist
+    @PreUpdate
+    @PostLoad
+    public void normalize() {
+        if (phone != null && phone.isBlank()) {
+            phone = null;
+        }
+        if (avatarUrl != null && avatarUrl.isBlank()) {
+            avatarUrl = null;
+        }
+        if (email != null) {
+            email = email.toLowerCase().trim();
+        }
+    }
 }

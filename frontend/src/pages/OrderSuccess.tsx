@@ -3,13 +3,15 @@ import { motion } from "framer-motion";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Link } from "react-router-dom";
-import { productApi } from "../utils/api";
+import { Link, useLocation } from "react-router-dom";
+import { productApi, PaymentApi } from "../utils/api";
+import { toast } from "react-toastify";
 import type { ProductSummary } from "../types/types";
 import ProductCard from "../components/ProductCard";
 import { cartService } from "../utils/cartService";
 
 const OrderSuccess: React.FC = () => {
+  const location = useLocation();
   const [products, setProducts] = useState<ProductSummary[]>([]);
 
   // Fetch sản phẩm từ API thật
@@ -17,7 +19,7 @@ const OrderSuccess: React.FC = () => {
     window.scrollTo(0, 0);
     const fetchProducts = async () => {
       try {
-        const response = await productApi.getAll({ page: 0, size: 6, sort: "rating,desc" });
+        const response = await productApi.getAll({ page: 0, size: 6, sort: "rating,desc", inStock: true });
         setProducts(response.content);
       } catch (error) {
         console.error("Lỗi khi tải sản phẩm gợi ý:", error);
@@ -75,6 +77,33 @@ const OrderSuccess: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
             Tiếp tục mua hàng
           </Link>
+
+          {/* Mock Payment Button (Dev Only) */}
+          {location.state?.orderData &&
+            location.state.orderData.paymentStatus !== 'PAID' && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <p className="text-sm text-gray-500 mb-3">🛠️ Khu vực dành cho Developer (Sandbox Mode)</p>
+                <button
+                  onClick={async () => {
+                    try {
+                      const orderId = location.state.orderData.orderId;
+                      await PaymentApi.mockPaymentSuccess({
+                        orderId,
+                        paymentMethod: location.state.orderData.paymentMethod
+                      });
+                      toast.success("Giả lập thanh toán thành công! Doanh thu đã được ghi nhận.");
+                      // Optional: reload or update UI state
+                    } catch (error) {
+                      toast.error("Lỗi khi giả lập thanh toán");
+                      console.error(error);
+                    }
+                  }}
+                  className="bg-yellow-100/100 text-yellow-800 px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors border border-yellow-300"
+                >
+                  ⚡ Giả lập Thanh toán Thành công (Mock Success)
+                </button>
+              </div>
+            )}
         </motion.div>
 
         {/* Sản phẩm tương tự */}
@@ -108,7 +137,7 @@ const OrderSuccess: React.FC = () => {
       </main>
 
       <Footer />
-    </div>
+    </div >
   );
 };
 

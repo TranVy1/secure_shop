@@ -28,6 +28,9 @@ public class DiscountServiceImpl implements DiscountService {
     @Transactional
     public DiscountDTO createDiscount(DiscountDTO discountDTO) {
         Discount discount = discountMapper.toEntity(discountDTO);
+        if (discount.getCode() != null) {
+            discount.setCode(discount.getCode().toUpperCase().trim());
+        }
         Discount savedDiscount = discountRepository.save(discount);
         return discountMapper.toDTO(savedDiscount);
     }
@@ -39,6 +42,9 @@ public class DiscountServiceImpl implements DiscountService {
                 .orElseThrow(() -> new RuntimeException("Discount not found with id: " + id));
 
         discountMapper.updateEntityFromDTO(discountDTO, discount);
+        if (discount.getCode() != null) {
+            discount.setCode(discount.getCode().toUpperCase().trim());
+        }
         Discount updatedDiscount = discountRepository.save(discount);
         return discountMapper.toDTO(updatedDiscount);
     }

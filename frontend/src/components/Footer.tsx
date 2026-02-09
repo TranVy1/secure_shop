@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Shield className="h-8 w-8 text-purple-600" />
-              <span className="text-xl font-bold">SecureShop</span>
+              <span className="text-xl font-bold">Security Shop</span>
             </div>
             <p className="text-gray-300 text-sm">
               Chuyên cung cấp thiết bị an ninh chất lượng cao, đảm bảo an toàn cho ngôi nhà và doanh nghiệp của bạn.
@@ -91,7 +91,7 @@ const Footer: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-cyan-500 flex-shrink-0" />
-                <span className="text-gray-300 text-sm">123 Đường ABC, Quận 1, TP.HCM</span>
+                <span className="text-gray-300 text-sm">Tòa nhà FPT Polytechnic, Phố Trịnh Văn Bô, Nam Từ Liêm, Hà Nội</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-cyan-500 flex-shrink-0" />
@@ -99,7 +99,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-cyan-500 flex-shrink-0" />
-                <span className="text-gray-300 text-sm">info@secureshop.vn</span>
+                <span className="text-gray-300 text-sm">info@securityshop.vn</span>
               </div>
             </div>
           </div>
@@ -108,7 +108,7 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-700 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-300 text-sm">
-              © 2025 SecureShop. Tất cả quyền được bảo lưu.
+              © 2025 Security Shop. Tất cả quyền được bảo lưu.
             </p>
             <div className="flex space-x-6">
               <Link to="/privacy" className="text-gray-300 hover:text-cyan-500 transition-colors text-sm">

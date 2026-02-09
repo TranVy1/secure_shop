@@ -541,3 +541,12 @@ export const analyticsApi = {
     return response.data;
   },
 };
+
+// Payment API
+export const PaymentApi = {
+  // Simulate successful payment (Sandbox/Dev)
+  mockPaymentSuccess: async (data: { orderId: string; paymentMethod?: string }) => {
+    const response = await api.post("/payments/mock-success", data);
+    return response.data;
+  },
+};

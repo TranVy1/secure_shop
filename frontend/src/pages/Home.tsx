@@ -9,27 +9,27 @@ import { Link } from 'react-router-dom';
 const Home: React.FC = () => {
 
   useEffect(() => {
-      window.scrollTo(0, 0);
-    }, []);
-  
+    window.scrollTo(0, 0);
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-white">
-      <Header/>
+      <Header />
       <main>
         <HeroSection />
         <FeaturedProducts />
-        
+
         {/* Why Choose Us Section */}
-        <section className="py-16 bg-white">
+        <section className="py-12 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-zinc-800 mb-4">Tại Sao Chọn SecureShop?</h2>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-zinc-800 mb-4">Tại Sao Chọn Security Shop?</h2>
               <p className="text-gray-600 max-w-2xl mx-auto">
                 Chúng tôi cam kết mang đến những giải pháp an ninh tốt nhất với chất lượng và dịch vụ hàng đầu
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center p-6">
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -40,7 +40,7 @@ const Home: React.FC = () => {
                   Tất cả sản phẩm đều được kiểm tra chất lượng nghiêm ngặt và có bảo hành chính hãng
                 </p>
               </div>
-              
+
               <div className="text-center p-6">
                 <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🚀</span>
@@ -50,7 +50,7 @@ const Home: React.FC = () => {
                   Giao hàng toàn quốc trong 24-48h, lắp đặt và hướng dẫn sử dụng miễn phí
                 </p>
               </div>
-              
+
               <div className="text-center p-6">
                 <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">💬</span>
@@ -65,7 +65,7 @@ const Home: React.FC = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="py-16 bg-gradient-to-r from-purple-600 to-cyan-500 text-white">
+        <section className="py-12 bg-gradient-to-r from-purple-600 to-cyan-500 text-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold mb-4">Sẵn Sàng Bảo Vệ Ngôi Nhà Của Bạn?</h2>
             <p className="text-xl mb-8 opacity-90">

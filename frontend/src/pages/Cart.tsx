@@ -10,11 +10,11 @@ import { useAppSelector } from '../hooks';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const Cart: React.FC = () => {
-  
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  
+
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -61,7 +61,7 @@ const Cart: React.FC = () => {
   // Toggle select all items
   const toggleSelectAll = () => {
     const availableItems = cartItems.filter(item => item.inStock);
-    
+
     if (selectedItems.size === availableItems.length) {
       // Deselect all
       setSelectedItems(new Set());
@@ -73,7 +73,7 @@ const Cart: React.FC = () => {
 
   const updateQuantity = async (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    
+
     const success = await cartService.updateQuantity(id, newQuantity);
     if (success) {
       setCartItems(items =>
@@ -198,7 +198,7 @@ const Cart: React.FC = () => {
     return (
       <div className="min-h-screen bg-white">
         <Header />
-        <div className="min-h-screen bg-gray-50 py-16">
+        <div className="min-h-screen bg-gray-50 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -236,7 +236,7 @@ const Cart: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      
+
       <div className="bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -280,7 +280,7 @@ const Cart: React.FC = () => {
                     Chọn tất cả ({availableItemsCount} sản phẩm)
                   </span>
                 </div>
-                
+
                 {selectedItems.size > 0 && (
                   <button
                     onClick={deleteSelectedItems}
@@ -299,9 +299,8 @@ const Cart: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
-                    !item.inStock ? 'opacity-60' : ''
-                  }`}
+                  className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${!item.inStock ? 'opacity-60' : ''
+                    }`}
                 >
                   <div className="flex gap-4">
                     {/* Checkbox */}
@@ -326,8 +325,8 @@ const Cart: React.FC = () => {
 
                     {/* Product Info */}
                     <div className="flex-1">
-                      <Link 
-                        to={`/products/${item.productId}`} 
+                      <Link
+                        to={`/products/${item.productId}`}
                         className="text-lg font-semibold text-zinc-800 mb-2 hover:text-purple-600 transition-colors block"
                       >
                         {item.name}
@@ -341,11 +340,10 @@ const Cart: React.FC = () => {
                         <p className="text-sm text-gray-500 my-2">
                           Còn lại:{" "}
                           <span
-                            className={`font-medium ${
-                              item.availableStock - item.quantity <= 3
+                            className={`font-medium ${item.availableStock - item.quantity <= 3
                                 ? "text-red-500"
                                 : "text-gray-800"
-                            }`}
+                              }`}
                           >
                             {item.availableStock - item.quantity} sản phẩm
                           </span>{" "}
@@ -475,7 +473,7 @@ const Cart: React.FC = () => {
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       onClick={handleCheckout}
                       className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors mb-4"
                     >

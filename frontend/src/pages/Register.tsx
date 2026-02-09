@@ -36,7 +36,7 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-const Register: React.FC = () => {  
+const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,18 +57,18 @@ const Register: React.FC = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-        await axiosInstance.post("/auth/register", {
-          email: data.email,
-          password: data.password,
-          name: data.name,
-          phone: data.phone || null,
-        });
+      await axiosInstance.post("/auth/register", {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        phone: data.phone || null,
+      });
 
-        setRegisteredEmail(data.email);
-        setIsSuccess(true);
-        toast.success("🎉 Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+      setRegisteredEmail(data.email);
+      setIsSuccess(true);
+      toast.success("🎉 Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -76,7 +76,7 @@ const Register: React.FC = () => {
     const redirectTo = new URLSearchParams(location.search).get('redirect');
     const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:12345';
     const oauthUrl = `${baseUrl}/oauth2/authorize/${provider}`;
-    
+
     if (redirectTo) {
       window.location.href = `${oauthUrl}?redirect=${encodeURIComponent(redirectTo)}`;
     } else {
@@ -87,7 +87,7 @@ const Register: React.FC = () => {
   // Password strength indicator
   const getPasswordStrength = (pass: string) => {
     if (!pass) return { strength: 0, label: '', color: '' };
-    
+
     let strength = 0;
     if (pass.length >= 8) strength++;
     if (/[a-z]/.test(pass)) strength++;
@@ -108,7 +108,7 @@ const Register: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        
+
         <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-md w-full space-y-8">
             <div className="text-center">
@@ -135,7 +135,7 @@ const Register: React.FC = () => {
                     1
                   </div>
                   <p className="text-sm text-gray-700">
-                    Mở email và tìm thư từ SecureShop
+                    Mở email và tìm thư từ Security Shop
                   </p>
                 </div>
 
@@ -212,7 +212,7 @@ const Register: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <main className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
@@ -248,9 +248,8 @@ const Register: React.FC = () => {
                     {...register('email')}
                     type="email"
                     autoComplete="email"
-                    className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
-                      errors.email ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
+                    className={`appearance-none block w-full pl-10 pr-3 py-2 border ${errors.email ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
                     placeholder="Nhập email của bạn"
                   />
                 </div>
@@ -272,9 +271,8 @@ const Register: React.FC = () => {
                     {...register('name')}
                     type="text"
                     autoComplete="name"
-                    className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
-                      errors.name ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
+                    className={`appearance-none block w-full pl-10 pr-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
                     placeholder="Nhập họ và tên"
                   />
                 </div>
@@ -296,9 +294,8 @@ const Register: React.FC = () => {
                     {...register('phone')}
                     type="tel"
                     autoComplete="tel"
-                    className={`appearance-none block w-full pl-10 pr-3 py-2 border ${
-                      errors.phone ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
+                    className={`appearance-none block w-full pl-10 pr-3 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
                     placeholder="0123456789"
                   />
                 </div>
@@ -320,9 +317,8 @@ const Register: React.FC = () => {
                     {...register('password')}
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    className={`appearance-none block w-full pl-10 pr-10 py-2 border ${
-                      errors.password ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
+                    className={`appearance-none block w-full pl-10 pr-10 py-2 border ${errors.password ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
                     placeholder="Nhập mật khẩu"
                   />
                   <button
@@ -343,16 +339,15 @@ const Register: React.FC = () => {
                   <div className="mt-2">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className={`h-full ${passwordStrength.color} transition-all duration-300`}
                           style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
                         ></div>
                       </div>
-                      <span className={`text-xs font-semibold ${
-                        passwordStrength.strength <= 2 ? 'text-red-600' :
-                        passwordStrength.strength <= 3 ? 'text-yellow-600' :
-                        'text-green-600'
-                      }`}>
+                      <span className={`text-xs font-semibold ${passwordStrength.strength <= 2 ? 'text-red-600' :
+                          passwordStrength.strength <= 3 ? 'text-yellow-600' :
+                            'text-green-600'
+                        }`}>
                         {passwordStrength.label}
                       </span>
                     </div>
@@ -396,9 +391,8 @@ const Register: React.FC = () => {
                     {...register('confirmPassword')}
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
-                    className={`appearance-none block w-full pl-10 pr-10 py-2 border ${
-                      errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
+                    className={`appearance-none block w-full pl-10 pr-10 py-2 border ${errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                      } rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500`}
                     placeholder="Nhập lại mật khẩu"
                   />
                   <button

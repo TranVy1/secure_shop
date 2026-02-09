@@ -49,22 +49,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       whileHover={{ y: -5 }}
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col group relative"
     >
-      {/* Product image */}
+      {/* Product image - Clickable */}
       <div className="relative">
-        <img
-          src={product.thumbnailUrl}
-          alt={product.name}
-          className="w-full h-48 object-cover"
-          loading="lazy"
-        />
+        <Link to={`/products/${product.id}`} className="block">
+          <img
+            src={product.thumbnailUrl}
+            alt={product.name}
+            className="w-full h-48 object-cover"
+            loading="lazy"
+          />
 
-        {!product.inStock && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white font-semibold">Hết hàng</span>
-          </div>
-        )}
+          {!product.inStock && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <span className="text-white font-semibold">Hết hàng</span>
+            </div>
+          )}
+        </Link>
 
-        {/* View details */}
+        {/* View details - Optional: Keep or remove since image is clickable now */}
         <Link
           to={`/products/${product.id}`}
           className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
@@ -102,11 +104,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`h-4 w-4 ${
-                      i < Math.floor(product.rating)
+                    className={`h-4 w-4 ${i < Math.floor(product.rating)
                         ? 'text-yellow-400 fill-current'
                         : 'text-gray-300'
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -137,9 +138,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
             <button
               onClick={handleAddToCart}
               disabled={isAdding}
-              className={`bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors ${
-                isAdding ? 'opacity-70 cursor-not-allowed' : ''
-              }`}
+              className={`bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors ${isAdding ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               aria-label="Thêm vào giỏ hàng"
             >
               {isAdding ? (

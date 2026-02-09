@@ -295,7 +295,7 @@ const ProductDetails: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
         {/* Breadcrumb */}
         <nav className="flex mb-8" aria-label="Breadcrumb">
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -325,7 +325,7 @@ const ProductDetails: React.FC = () => {
         </nav>
 
         {/* Product Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
           {/* Product Images */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -348,11 +348,10 @@ const ProductDetails: React.FC = () => {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                      selectedImage === index
-                        ? "border-purple-600"
-                        : "border-gray-200"
-                    }`}
+                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImage === index
+                      ? "border-purple-600"
+                      : "border-gray-200"
+                      }`}
                   >
                     <img
                       src={image?.url || product.thumbnailUrl}
@@ -401,11 +400,10 @@ const ProductDetails: React.FC = () => {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(product.rating)
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
+                      className={`h-5 w-5 ${i < Math.floor(product.rating)
+                        ? "text-yellow-400 fill-current"
+                        : "text-gray-300"
+                        }`}
                     />
                   ))}
                 </div>
@@ -429,7 +427,7 @@ const ProductDetails: React.FC = () => {
                     {Math.round(
                       ((product.listedPrice - product.price) /
                         product.listedPrice) *
-                        100
+                      100
                     )}
                     %
                   </span>
@@ -439,9 +437,8 @@ const ProductDetails: React.FC = () => {
 
             <div className="flex items-center space-x-4">
               <span
-                className={`flex items-center ${
-                  product.inStock ? "text-green-600" : "text-red-600"
-                }`}
+                className={`flex items-center ${product.inStock ? "text-green-600" : "text-red-600"
+                  }`}
               >
                 {product.inStock ? (
                   <CheckCircle className="h-5 w-5 mr-2" />
@@ -508,11 +505,10 @@ const ProductDetails: React.FC = () => {
               {/* Wishlist luôn hoạt động */}
               <button
                 onClick={handleWishlist}
-                className={`p-3 rounded-lg border ${
-                  isWishlisted
-                    ? "bg-pink-50 border-pink-200 text-pink-600"
-                    : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                }`}
+                className={`p-3 rounded-lg border ${isWishlisted
+                  ? "bg-pink-50 border-pink-200 text-pink-600"
+                  : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
+                  }`}
               >
                 <Heart
                   className={`h-5 w-5 ${isWishlisted ? "fill-current" : ""}`}
@@ -558,7 +554,7 @@ const ProductDetails: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-gray-50 rounded-lg p-6 mb-12"
+          className="bg-gray-50 rounded-lg p-6 mb-8"
         >
           <h2 className="text-2xl font-bold text-zinc-800 mb-6">
             Thông số kỹ thuật
@@ -593,11 +589,10 @@ const ProductDetails: React.FC = () => {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(product.rating)
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
+                      className={`h-5 w-5 ${i < Math.floor(product.rating)
+                        ? "text-yellow-400 fill-current"
+                        : "text-gray-300"
+                        }`}
                     />
                   ))}
                 </div>
@@ -613,11 +608,10 @@ const ProductDetails: React.FC = () => {
             <span className="text-sm font-medium text-gray-700">Lọc theo:</span>
             <button
               onClick={() => setFilterRating(null)}
-              className={`px-3 py-1 rounded-full text-sm ${
-                filterRating === null
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              className={`px-3 py-1 rounded-full text-sm ${filterRating === null
+                ? "bg-purple-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               Tất cả
             </button>
@@ -625,11 +619,10 @@ const ProductDetails: React.FC = () => {
               <button
                 key={rating}
                 onClick={() => setFilterRating(rating)}
-                className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${
-                  filterRating === rating
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+                className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${filterRating === rating
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
               >
                 {rating} <Star className="h-3 w-3 fill-current" />
               </button>
@@ -667,11 +660,10 @@ const ProductDetails: React.FC = () => {
                           {[...Array(5)].map((_, i) => (
                             <Star
                               key={i}
-                              className={`h-4 w-4 ${
-                                i < review.rating
-                                  ? "text-yellow-400 fill-current"
-                                  : "text-gray-300"
-                              }`}
+                              className={`h-4 w-4 ${i < review.rating
+                                ? "text-yellow-400 fill-current"
+                                : "text-gray-300"
+                                }`}
                             />
                           ))}
                           <span className="text-sm text-gray-500 ml-2">

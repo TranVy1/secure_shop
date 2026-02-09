@@ -41,7 +41,7 @@ public class ArticleController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ArticleDTO> createArticle(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody CreateArticleRequest req) {
+            @RequestBody @jakarta.validation.Valid CreateArticleRequest req) {
         User admin = userRepository.findById(userDetails.getUser().getId())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
         return ResponseEntity.ok(articleService.createArticle(req, admin));
@@ -52,7 +52,7 @@ public class ArticleController {
     public ResponseEntity<ArticleDTO> updateArticle(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable UUID id,
-            @RequestBody UpdateArticleRequest req) {
+            @RequestBody @jakarta.validation.Valid UpdateArticleRequest req) {
         User admin = userRepository.findById(userDetails.getUser().getId())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
         return ResponseEntity.ok(articleService.updateArticle(id, req, admin));

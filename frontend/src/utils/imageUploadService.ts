@@ -1,124 +1,82 @@
-import { toast } from "react-toastify";
-import { supabase } from "./supabase";
-import { v4 as uuidv4 } from "uuid";
+import { api } from './axiosConfig';
 
 export interface UploadResult {
   url: string;
   path: string;
-  bucket: string;
 }
 
 interface UploadOptions {
-  bucket?: string;
   folder?: string;
 }
 
 class ImageUploadService {
-  private defaultBucket = "products";
-
-  async uploadImage(
-    file: File,
-    options: UploadOptions = {}
-  ): Promise<UploadResult> {
+  async uploadImage(file: File, _options: UploadOptions = {}): Promise<UploadResult> {
     try {
       // Validate file
       this.validateFile(file);
 
-      const bucket = options.bucket ?? this.defaultBucket;
-      const folder = options.folder ?? "";
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = folder
-        ? `${folder}/${uuidv4()}.${fileExt}`
-        : `${uuidv4()}.${fileExt}`;
-
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (error) throw new Error(`Upload failed: ${error.message}`);
-
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
+      // Upload to backend using authenticated API
+      const response = await api.post('/upload/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       return {
-        url: urlData.publicUrl,
-        path: data.path,
-        bucket,
+        url: `http://localhost:8090${response.data.url}`, // Full URL for display
+        path: response.data.path,
       };
-    } catch (error) {
-      toast.error((error as Error).message);
-      throw error;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || error.message || 'Upload failed';
+      throw new Error(errorMessage);
     }
   }
 
-  async uploadMultipleImages(
-    files: File[],
-    options: UploadOptions = {}
-  ): Promise<UploadResult[]> {
+  async uploadMultipleImages(files: File[], options: UploadOptions = {}): Promise<UploadResult[]> {
     const uploadPromises = files.map((file) => this.uploadImage(file, options));
     return Promise.all(uploadPromises);
   }
 
-  async deleteImage(pathOrUrl: string, bucket?: string): Promise<void> {
+  async deleteImage(pathOrUrl: string): Promise<void> {
     try {
-      const resolvedBucket =
-        bucket ?? this.extractBucketFromUrl(pathOrUrl) ?? this.defaultBucket;
-      const resolvedPath = this.getPathFromUrl(pathOrUrl);
-
-      const { error } = await supabase.storage
-        .from(resolvedBucket)
-        .remove([resolvedPath]);
-
-      if (error) toast.error(`Delete failed: ${error.message}`);
-    } catch (error) {
-      toast.error((error as Error).message);
+      const path = this.getPathFromUrl(pathOrUrl);
+      await api.delete('/upload/image', {
+        params: { path },
+      });
+    } catch (error: any) {
+      console.error('Delete failed:', error);
     }
   }
 
-  async deleteMultipleImages(
-    pathsOrUrls: string[],
-    bucket?: string
-  ): Promise<void> {
-    const deletePromises = pathsOrUrls.map((path) =>
-      this.deleteImage(path, bucket)
-    );
+  async deleteMultipleImages(pathsOrUrls: string[]): Promise<void> {
+    const deletePromises = pathsOrUrls.map((path) => this.deleteImage(path));
     await Promise.all(deletePromises);
   }
 
   private validateFile(file: File): void {
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      toast.error("File size must be less than 5MB");
+      throw new Error('File size must be less than 5MB');
     }
 
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Only JPEG, PNG, and WebP images are allowed");
+      throw new Error('Only JPEG, PNG, and WebP images are allowed');
     }
   }
 
   getPathFromUrl(urlOrPath: string): string {
-    if (!urlOrPath.startsWith("http")) return urlOrPath;
+    if (!urlOrPath.startsWith('http')) return urlOrPath;
     try {
       const url = new URL(urlOrPath);
-      const parts = url.pathname.split("/object/public/");
-      return parts.length > 1 ? parts[1].split("/").slice(1).join("/") : "";
+      const parts = url.pathname.split('/uploads/');
+      return parts.length > 1 ? parts[1] : '';
     } catch {
-      return "";
-    }
-  }
-
-  private extractBucketFromUrl(url: string): string | null {
-    try {
-      const match = url.match(/\/object\/public\/([^/]+)\//);
-      return match ? match[1] : null;
-    } catch {
-      return null;
+      return '';
     }
   }
 }
