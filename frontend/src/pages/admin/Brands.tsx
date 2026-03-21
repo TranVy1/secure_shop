@@ -6,13 +6,13 @@ import type { Brand } from '../../types/types';
 import BrandModal from '../../components/admin-modal/BrandModal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
-type Props = { 
+type Props = {
   data?: { content: Brand[]; page: { totalPages: number; totalElements: number } };
   onReload?: () => void;
 };
 
 const Brands: React.FC<Props> = ({ data, onReload }) => {
-  const brands = data?.content || [];
+  const brands = useMemo(() => data?.content || [], [data]);
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | undefined>();
@@ -23,9 +23,9 @@ const Brands: React.FC<Props> = ({ data, onReload }) => {
 
   const filteredBrands = useMemo(() => {
     if (!searchTerm.trim()) return brands;
-    
+
     const searchLower = searchTerm.toLowerCase();
-    return brands.filter((brand: Brand) => 
+    return brands.filter((brand: Brand) =>
       brand.name.toLowerCase().includes(searchLower)
     );
   }, [brands, searchTerm]);
@@ -139,6 +139,7 @@ const Brands: React.FC<Props> = ({ data, onReload }) => {
 
 export default Brands;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const result = await brandApi.getAll({ page: 0, size: 100 });

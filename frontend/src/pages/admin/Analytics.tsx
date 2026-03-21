@@ -20,7 +20,7 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     loadAnalyticsData();
     loadProductsData();
-  }, [dateRange, startDate, endDate]);
+  }, [dateRange, startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadAnalyticsData = async () => {
     try {
@@ -121,9 +121,9 @@ const Analytics: React.FC = () => {
   const orderStatusChartData = analytics?.orderStatusDistribution.map(dist => ({
     name: getOrderStatusLabel(dist.status),
     value: dist.count,
-    color: dist.status === 'DELIVERED' ? '#10b981' 
-      : dist.status === 'CANCELLED' ? '#ef4444' 
-      : '#f59e0b'
+    color: dist.status === 'DELIVERED' ? '#10b981'
+      : dist.status === 'CANCELLED' ? '#ef4444'
+        : '#f59e0b'
   })) || [];
 
   const topProductsChartData = analytics?.topProducts.map(product => ({
@@ -208,11 +208,11 @@ const Analytics: React.FC = () => {
       const dateLabel = dateRange === 'custom' && startDate && endDate
         ? `${startDate}_${endDate}`
         : dateRange === 'today' ? 'HomNay'
-        : dateRange === 'week' ? 'TuanNay'
-        : dateRange === 'month' ? 'ThangNay'
-        : dateRange === 'year' ? 'NamNay'
-        : 'TatCa';
-      
+          : dateRange === 'week' ? 'TuanNay'
+            : dateRange === 'month' ? 'ThangNay'
+              : dateRange === 'year' ? 'NamNay'
+                : 'TatCa';
+
       const fileName = `BaoCaoThongKe_${dateLabel}_${new Date().getTime()}.xlsx`;
       XLSX.writeFile(wb, fileName);
     } catch (error) {
@@ -275,17 +275,16 @@ const Analytics: React.FC = () => {
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  dateRange === range
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${dateRange === range
                     ? 'bg-purple-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
-                {range === 'today' ? 'Hôm nay' 
+                {range === 'today' ? 'Hôm nay'
                   : range === 'week' ? 'Tuần này'
-                  : range === 'month' ? 'Tháng này'
-                  : range === 'year' ? 'Năm nay'
-                  : 'Tùy chỉnh'}
+                    : range === 'month' ? 'Tháng này'
+                      : range === 'year' ? 'Năm nay'
+                        : 'Tùy chỉnh'}
               </button>
             ))}
           </div>
@@ -397,8 +396,8 @@ const Analytics: React.FC = () => {
             <AreaChart data={revenueChartData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" />

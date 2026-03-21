@@ -10,7 +10,7 @@ type Props = {
 };
 
 const Promotions: React.FC<Props> = ({ data, onReload }) => {
-  const discounts = data || [];
+  const discounts = useMemo(() => data || [], [data]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
@@ -140,8 +140,8 @@ const Promotions: React.FC<Props> = ({ data, onReload }) => {
                         {discount.discountType === "PERCENT"
                           ? `${discount.discountValue}%`
                           : discount.discountType === "FIXED_AMOUNT"
-                          ? `${discount.discountValue.toLocaleString("vi-VN")}₫`
-                          : "Miễn phí vận chuyển"}
+                            ? `${discount.discountValue.toLocaleString("vi-VN")}₫`
+                            : "Miễn phí vận chuyển"}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
@@ -159,11 +159,10 @@ const Promotions: React.FC<Props> = ({ data, onReload }) => {
                     </div>
                     <div className="mt-2">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          discount.active
+                        className={`px-2 py-1 rounded text-xs ${discount.active
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-700"
-                        }`}
+                          }`}
                       >
                         {discount.active ? "Đang hoạt động" : "Không hoạt động"}
                       </span>
@@ -220,6 +219,7 @@ const Promotions: React.FC<Props> = ({ data, onReload }) => {
 
 export default Promotions;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const result = await DiscountApi.getAll();

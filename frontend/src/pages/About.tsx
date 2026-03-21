@@ -67,17 +67,21 @@ const About: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Header />
       {/* Hero Section */}
-      <section className="relative h-[400px] bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
+      <section className="relative py-24 lg:py-32 bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-white opacity-10 rounded-full mix-blend-overlay filter blur-3xl transform -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-300 opacity-20 rounded-full mix-blend-overlay filter blur-3xl transform translate-y-1/2"></div>
+
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24 flex items-center justify-center text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-white"
+            className="text-white max-w-4xl"
           >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Về Security Shop</h1>
-            <p className="text-xl md:text-2xl opacity-90 max-w-2xl">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Về Security Shop</h1>
+            <p className="text-xl md:text-2xl opacity-90">
               Đối tác tin cậy trong việc bảo vệ an toàn cho ngôi nhà và doanh nghiệp của bạn
             </p>
           </motion.div>
@@ -86,7 +90,7 @@ const About: React.FC = () => {
 
       {/* Stats Section */}
       <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -119,7 +123,7 @@ const About: React.FC = () => {
 
       {/* Story Section */}
       <section className="py-12 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
@@ -165,7 +169,7 @@ const About: React.FC = () => {
 
       {/* Values Section */}
       <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -205,7 +209,7 @@ const About: React.FC = () => {
 
       {/* Timeline Section */}
       <section className="py-12 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -256,7 +260,7 @@ const About: React.FC = () => {
 
       {/* Team Section */}
       <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

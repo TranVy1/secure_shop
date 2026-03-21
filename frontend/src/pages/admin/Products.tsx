@@ -1,42 +1,48 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, RefreshCw, QrCode } from 'lucide-react';
 import type { ProductSummary } from '../../types/types';
 import { productApi } from '../../utils/api';
 import ProductModal from '../../components/admin-modal/ProductModal';
+import BarcodeModal from '../../components/admin-modal/BarcodeModal';
 import { toast } from 'react-toastify';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Pagination from '../../components/Pagination';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type Props = {};
 
 const Products: React.FC<Props> = () => {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Pagination states
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
-  
+
   const [selectedProduct, setSelectedProduct] = useState<ProductSummary | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; productId: string | null }>({
     isOpen: false,
     productId: null,
   });
+  const [barcodeModal, setBarcodeModal] = useState<{ isOpen: boolean; product: ProductSummary | null }>({
+    isOpen: false,
+    product: null,
+  });
 
   // Load products with pagination
   const loadProducts = async (currentPage = page, currentPageSize = pageSize, search = searchTerm) => {
     setLoading(true);
     try {
-      const response = await productApi.getAll({ 
-        page: currentPage, 
+      const response = await productApi.getAll({
+        page: currentPage,
         size: currentPageSize,
         keyword: search.trim() || undefined
       });
-      
+
       setProducts(response.content || []);
       setTotalPages(response.page.totalPages || 0);
       setTotalElements(response.page.totalElements || 0);
@@ -54,7 +60,7 @@ const Products: React.FC<Props> = () => {
   // Load products on mount and when pagination changes
   useEffect(() => {
     loadProducts();
-  }, [page, pageSize]);
+  }, [page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reload function for after add/edit/delete
   const handleReload = () => {
@@ -127,7 +133,7 @@ const Products: React.FC<Props> = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-zinc-800">Quản lý sản phẩm</h2>
-        <button 
+        <button
           onClick={handleAddProduct}
           className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-shadow"
         >
@@ -190,10 +196,10 @@ const Products: React.FC<Props> = () => {
                   <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2 max-w-[280px]">
-                        <img 
-                          src={product.thumbnailUrl} 
-                          alt={product.name} 
-                          className="w-12 h-12 object-cover rounded-lg border border-gray-200 flex-shrink-0" 
+                        <img
+                          src={product.thumbnailUrl}
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded-lg border border-gray-200 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-gray-900 line-clamp-2">{product.name}</div>
@@ -232,9 +238,8 @@ const Products: React.FC<Props> = () => {
                       {product.price.toLocaleString()} ₫
                     </td>
                     <td className="px-4 py-4 text-sm whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                        product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {product.inStock ? `${product.availableStock || 0} sp` : 'Hết hàng'}
                       </span>
                     </td>
@@ -247,14 +252,21 @@ const Products: React.FC<Props> = () => {
                     </td>
                     <td className="px-4 py-4 text-sm text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
+                          onClick={() => setBarcodeModal({ isOpen: true, product })}
+                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Mã vạch"
+                        >
+                          <QrCode className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleEditProduct(product.id)}
                           className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                           title="Chỉnh sửa"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteProduct(product.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Xóa"
@@ -276,6 +288,13 @@ const Products: React.FC<Props> = () => {
           </table>
         </div>
       </div>
+
+      {/* Barcode Modal */}
+      <BarcodeModal
+        isOpen={barcodeModal.isOpen}
+        product={barcodeModal.product}
+        onClose={() => setBarcodeModal({ isOpen: false, product: null })}
+      />
 
       {/* Product Modal */}
       <ProductModal
@@ -311,6 +330,7 @@ const Products: React.FC<Props> = () => {
 
 export default Products;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const response = await productApi.getAll({ page: 0, size: 100 });

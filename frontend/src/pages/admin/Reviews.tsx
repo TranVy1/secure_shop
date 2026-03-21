@@ -5,13 +5,13 @@ import type { Review } from '../../types/types';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ReviewDetailsModal from '../../components/admin-modal/ReviewDetailsModal';
 
-type Props = { 
+type Props = {
   data?: { content: Review[]; page: { totalPages: number; totalElements: number; number: number; size: number } };
   onReload?: () => void;
 };
 
 const Reviews: React.FC<Props> = ({ data, onReload }) => {
-  const reviews = data?.content || [];
+  const reviews = useMemo(() => data?.content || [], [data]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -40,7 +40,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
     }
 
     // Sort by created date (newest first)
-    return filtered.sort((a: Review, b: Review) => 
+    return filtered.sort((a: Review, b: Review) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [reviews, searchTerm, statusFilter]);
@@ -52,7 +52,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
       REJECTED: { bg: 'bg-red-100', text: 'text-red-800', label: 'Từ chối' },
     };
     const config = statusConfig[status] || statusConfig.PENDING;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
         {config.label}
@@ -66,9 +66,8 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className={`w-4 h-4 ${
-              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-            }`}
+            className={`w-4 h-4 ${star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+              }`}
           />
         ))}
         <span className="ml-2 text-sm text-gray-600">({rating})</span>
@@ -92,7 +91,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-80"
             />
           </div>
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -138,7 +137,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
                   </td>
                   <td className="px-6 py-4 text-sm text-right">
                     <div className="flex justify-end gap-2">
-                      <button 
+                      <button
                         onClick={() => {
                           setSelectedReview(review);
                           setIsDetailsModalOpen(true);
@@ -150,7 +149,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
                       </button>
                       {review.status === 'PENDING' && (
                         <>
-                          <button 
+                          <button
                             className="inline-flex items-center gap-1 px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             onClick={async () => {
                               try {
@@ -164,7 +163,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
                             <CheckCircle className="w-4 h-4" />
                             <span>Duyệt</span>
                           </button>
-                          <button 
+                          <button
                             className="inline-flex items-center gap-1 px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             onClick={async () => {
                               try {
@@ -180,7 +179,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
                           </button>
                         </>
                       )}
-                      <button 
+                      <button
                         className="inline-flex items-center gap-1 px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         onClick={() => {
                           setSelectedReviewToDelete(review);
@@ -245,6 +244,7 @@ const Reviews: React.FC<Props> = ({ data, onReload }) => {
 
 export default Reviews;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const response = await ReviewApi.getAll({ page: 0, size: 50 });

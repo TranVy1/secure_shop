@@ -7,13 +7,13 @@ import type { CategorySummary } from '../../types/types';
 import CategoryModal from '../../components/admin-modal/CategoryModal';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
-type Props = { 
+type Props = {
   data?: CategorySummary[];
   onReload?: () => void;
 };
 
 const Categories: React.FC<Props> = ({ data, onReload }) => {
-  const categories = data || [];
+  const categories = useMemo(() => data || [], [data]);
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategorySummary | undefined>();
@@ -24,9 +24,9 @@ const Categories: React.FC<Props> = ({ data, onReload }) => {
 
   const filteredCategories = useMemo(() => {
     if (!searchTerm.trim()) return categories;
-    
+
     const searchLower = searchTerm.toLowerCase();
-    return categories.filter((category: CategorySummary) => 
+    return categories.filter((category: CategorySummary) =>
       category.name.toLowerCase().includes(searchLower) ||
       (category.description && category.description.toLowerCase().includes(searchLower))
     );
@@ -105,8 +105,8 @@ const Categories: React.FC<Props> = ({ data, onReload }) => {
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center overflow-hidden">
                   {category.imageUrl ? (
-                    <img 
-                      src={category.imageUrl} 
+                    <img
+                      src={category.imageUrl}
                       alt={category.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -164,6 +164,7 @@ const Categories: React.FC<Props> = ({ data, onReload }) => {
 
 export default Categories;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const result = await categoryApi.getAllForAdmin();

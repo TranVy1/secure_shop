@@ -1,7 +1,8 @@
 import React from 'react';
 import { Users, Package, ShoppingCart, TrendingUp, UserPlus, MessageSquare, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
-type Props = { 
+type Props = {
   data?: any;
   onReload?: () => void;
 };
@@ -9,6 +10,7 @@ type Props = {
 const Dashboard: React.FC<Props> = ({ data }) => {
   const stats = data?.stats || { users: 0, orders: 0, revenue: 0, products: 0 };
   const activities = data?.activities || [];
+  const revenueChartData = data?.revenueChartData || [];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -47,7 +49,7 @@ const Dashboard: React.FC<Props> = ({ data }) => {
   return (
     <div>
       <h2 className="text-2xl font-bold text-zinc-800 mb-6">Tổng quan hệ thống</h2>
-      
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
@@ -95,30 +97,52 @@ const Dashboard: React.FC<Props> = ({ data }) => {
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-zinc-800 mb-4">Hoạt động gần đây</h3>
-        {activities.length > 0 ? (
-          <div className="space-y-3">
-            {activities.map((activity: any, index: number) => (
-              <div
-                key={index}
-                className={`flex items-start gap-4 p-4 rounded-lg ${getActivityBg(activity.type)} hover:shadow-sm transition-shadow`}
-              >
-                <div className="flex-shrink-0 mt-1">
-                  {getActivityIcon(activity.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-800">{activity.title}</p>
-                  <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
-                  <p className="text-xs text-gray-500 mt-2">{activity.time}</p>
-                </div>
-              </div>
-            ))}
+      {/* Charts and Recent Activity */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white border text-black border-gray-200 rounded-xl p-6 xl:col-span-2">
+          <h3 className="text-lg font-semibold text-zinc-800 mb-4">Doanh thu 7 ngày qua</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueChartData} margin={{ top: 10, right: 10, left: 20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} dy={10} />
+                <YAxis dataKey="revenue" axisLine={false} tickLine={false} tick={{ fill: '#6b7280', fontSize: 12 }} tickFormatter={(value) => `${(value / 1000).toLocaleString()}k`} width={60} />
+                <RechartsTooltip
+                  formatter={(value: number) => [`${value.toLocaleString()} ₫`, 'Doanh thu']}
+                  cursor={{ fill: '#f3f4f6' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                />
+                <Bar dataKey="revenue" fill="#14b8a6" radius={[4, 4, 0, 0]} maxBarSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        ) : (
-          <p className="text-gray-500 text-center py-8">Chưa có dữ liệu hoạt động</p>
-        )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6 h-full overflow-y-auto" style={{ maxHeight: '400px' }}>
+          <h3 className="text-lg font-semibold text-zinc-800 mb-4">Hoạt động gần đây</h3>
+          {activities.length > 0 ? (
+            <div className="space-y-3">
+              {activities.map((activity: any, index: number) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-4 p-4 rounded-lg ${getActivityBg(activity.type)} hover:shadow-sm transition-shadow`}
+                >
+                  <div className="flex-shrink-0 mt-1">
+                    {getActivityIcon(activity.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-zinc-800">{activity.title}</p>
+                    <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
+                    <p className="text-xs text-gray-500 mt-2">{activity.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-8">Chưa có dữ liệu hoạt động</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -126,12 +150,13 @@ const Dashboard: React.FC<Props> = ({ data }) => {
 
 export default Dashboard;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const { orderApi, productApi, userApi, InventoryApi } = await import('../../utils/api');
-    
+
     const [ordersResponse, productsResponse, usersResponse, inventoriesResponse] = await Promise.all([
-      orderApi.getAll({ page: 0, size: 20 }), 
+      orderApi.getAll({ page: 0, size: 20 }),
       productApi.getAll({ page: 0, size: 20 }),
       userApi.getAllUsers(),
       InventoryApi.getAll().catch((err) => {
@@ -149,7 +174,7 @@ export async function loadData() {
     const totalUsers = users.length;
     const totalOrders = await orderApi.countOrders();
     const totalProducts = await productApi.countProducts();
-    
+
     // Doanh thu từ đơn đã giao và đã thanh toán
     const totalRevenue = orders
       .filter((o: any) => o.status === 'DELIVERED' && o.paymentStatus === 'PAID')
@@ -165,11 +190,11 @@ export async function loadData() {
 
     recentOrders.forEach((order: any) => {
       const timeAgo = getTimeAgo(order.createdAt);
-      const statusText = 
+      const statusText =
         order.status === 'DELIVERED' ? 'đã giao' :
-        order.status === 'PENDING' ? 'mới' :
-        order.status === 'CANCELLED' ? 'đã hủy' : 'đang xử lý';
-      
+          order.status === 'PENDING' ? 'mới' :
+            order.status === 'CANCELLED' ? 'đã hủy' : 'đang xử lý';
+
       activities.push({
         type: 'order',
         title: `Đơn hàng ${statusText} #${order.id.slice(0, 8)}`,
@@ -194,7 +219,7 @@ export async function loadData() {
     });
 
     if (inventories.length > 0) {
-      const lowStockItems = inventories.filter((inv: any) => 
+      const lowStockItems = inventories.filter((inv: any) =>
         inv.quantity < 10 && inv.quantity > 0
       ).slice(0, 2);
 
@@ -207,7 +232,7 @@ export async function loadData() {
         });
       });
 
-      const outOfStockItems = inventories.filter((inv: any) => 
+      const outOfStockItems = inventories.filter((inv: any) =>
         inv.quantity === 0
       ).slice(0, 2);
 
@@ -222,7 +247,7 @@ export async function loadData() {
     } else if (products.length > 0) {
       // Fallback: Sử dụng dữ liệu từ Products API
       const outOfStockProducts = products.filter((p: any) => !p.inStock).slice(0, 3);
-      
+
       outOfStockProducts.forEach((product: any) => {
         activities.push({
           type: 'alert',
@@ -232,7 +257,7 @@ export async function loadData() {
         });
       });
 
-      const lowStockProducts = products.filter((p: any) => 
+      const lowStockProducts = products.filter((p: any) =>
         p.inStock && p.stockQuantity != null && p.stockQuantity < 10
       ).slice(0, 2);
 
@@ -246,7 +271,6 @@ export async function loadData() {
       });
     }
 
-    // Sắp xếp hoạt động theo thời gian
     activities.sort((a: any, b: any) => {
       const timeOrder: any = {
         'vừa xong': 0,
@@ -257,6 +281,34 @@ export async function loadData() {
       return aOrder - bOrder;
     });
 
+    const revenueByDay: Record<string, number> = {};
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().split('T')[0];
+    });
+
+    last7Days.forEach(date => {
+      revenueByDay[date] = 0;
+    });
+
+    orders.forEach((o: any) => {
+      if (o.status === 'DELIVERED' && o.paymentStatus === 'PAID' && o.createdAt) {
+        const date = o.createdAt.split('T')[0];
+        if (revenueByDay[date] !== undefined) {
+          revenueByDay[date] += (o.grandTotal || 0);
+        }
+      }
+    });
+
+    const revenueChartData = last7Days.map(date => {
+      const parts = date.split('-');
+      return {
+        name: `${parts[2]}/${parts[1]}`, // DD/MM
+        revenue: revenueByDay[date]
+      };
+    });
+
     return {
       stats: {
         users: totalUsers,
@@ -264,7 +316,8 @@ export async function loadData() {
         revenue: totalRevenue,
         products: totalProducts
       },
-      activities: activities.slice(0, 8)
+      activities: activities.slice(0, 8),
+      revenueChartData
     };
   } catch (error) {
     console.error('Error loading dashboard data:', error);

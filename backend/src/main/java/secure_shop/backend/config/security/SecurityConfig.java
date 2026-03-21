@@ -79,8 +79,6 @@ public class SecurityConfig {
                                                 // OPTIONS requests - CHO PHÉP TẤT CẢ (CORS preflight)
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                                                // DEBUG endpoints - XÓA SAU KHI FIX XONG!!!
-                                                .requestMatchers("/api/debug/**").permitAll()
 
                                                 // Auth endpoints - public login/register/reset
                                                 .requestMatchers(
@@ -92,6 +90,7 @@ public class SecurityConfig {
                                                                 "/api/auth/forgot-password",
                                                                 "/api/auth/verify-token",
                                                                 "/api/auth/reset-password",
+                                                                "/api/auth/logout",
                                                                 "/oauth2/**",
                                                                 "/login/oauth2/**",
                                                                 "/error")
@@ -102,8 +101,10 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                                                 .requestMatchers("/api/upload/**").hasRole("ADMIN")
 
-                                                // User endpoints
-                                                .requestMatchers("/api/users/me/**").authenticated()
+                                                // User endpoints - /me exact match AND /me/** sub-paths must both be authenticated
+                                                .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                                                .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
+                                                .requestMatchers(HttpMethod.DELETE, "/api/users/me").authenticated()
                                                 .requestMatchers("/api/users/**").hasRole("ADMIN")
 
                                                 // Address endpoints
@@ -170,7 +171,16 @@ public class SecurityConfig {
                                                                 "/api/discounts/active",
                                                                 "/api/discounts/code/**")
                                                 .permitAll()
-                                                .requestMatchers("/api/discounts/**").hasRole("ADMIN")
+                                                 .requestMatchers("/api/discounts/**").hasRole("ADMIN")
+
+                                                 // POS endpoints (STAFF + ADMIN)
+                                                 .requestMatchers("/api/pos/**").hasAnyRole("STAFF", "ADMIN")
+
+                                                 // Invoice endpoints (STAFF + ADMIN)
+                                                 .requestMatchers("/api/invoices/**").hasAnyRole("STAFF", "ADMIN")
+
+                                                 // Barcode endpoints (STAFF + ADMIN for scan/management)
+                                                 .requestMatchers("/api/barcodes/**").hasAnyRole("STAFF", "ADMIN")
 
                                                 // Allow authenticated users to GET a single order (owner check handled
                                                 // by @PreAuthorize)
@@ -187,6 +197,8 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
 
                                                 // === Payment endpoints ===
+                                                .requestMatchers(HttpMethod.GET, "/api/vnpay/payment-callback").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/vnpay/create-payment").authenticated()
                                                 .requestMatchers(HttpMethod.GET, "/api/payments/order/**")
                                                 .authenticated()
                                                 .requestMatchers(HttpMethod.POST, "/api/payments").authenticated()
@@ -241,6 +253,10 @@ public class SecurityConfig {
                                                 // Chatbot
                                                 .requestMatchers("/api/chat/ask").permitAll()
                                                 .requestMatchers("/api/chat/ingest").hasRole("ADMIN")
+
+                                                // POS / Barcode endpoints
+                                                .requestMatchers("/api/barcodes/**").hasAnyRole("STAFF", "ADMIN")
+                                                .requestMatchers("/api/pos/**").hasAnyRole("STAFF", "ADMIN")
 
                                                 // Default: require authentication for everything else
                                                 .anyRequest().authenticated())

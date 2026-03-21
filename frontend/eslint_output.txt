@@ -1,0 +1,55 @@
+D:\DATN_TMDT\congdc\congdc\frontend\src\components\admin-modal\CategoryModal.tsx
+  81:9 - prefer-const (2) - 'oldImageUrl' is never reassigned. Use 'const' instead.
+D:\DATN_TMDT\congdc\congdc\frontend\src\components\admin-modal\OrderDetailsModal.tsx
+  21:6 - react-hooks/exhaustive-deps (1) - React Hook useEffect has a missing dependency: 'loadOrderDetails'. Either include it or remove the dependency array.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\Admin.tsx
+  247:6 - react-hooks/exhaustive-deps (1) - React Hook useEffect has missing dependencies: 'currentPage' and 'pageSize'. Either include them or remove the dependency array.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\Profile.tsx
+  123:6 - react-hooks/exhaustive-deps (1) - React Hook useEffect has a missing dependency: 'fetchMyReviews'. Either include it or remove the dependency array.
+  330:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  343:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  359:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  373:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  390:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  473:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  517:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+  528:14 - @typescript-eslint/no-unused-vars (2) - 'error' is defined but never used.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Analytics.tsx
+  23:6 - react-hooks/exhaustive-deps (1) - React Hook useEffect has a missing dependency: 'loadAnalyticsData'. Either include it or remove the dependency array.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Articles.tsx
+  15:9 - react-hooks/exhaustive-deps (1) - The 'articles' logical expression could make the dependencies of useMemo Hook (at line 56) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'articles' in its own useMemo() Hook.
+  245:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Brands.tsx
+  15:9 - react-hooks/exhaustive-deps (1) - The 'brands' logical expression could make the dependencies of useMemo Hook (at line 31) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'brands' in its own useMemo() Hook.
+  142:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Categories.tsx
+  16:9 - react-hooks/exhaustive-deps (1) - The 'categories' logical expression could make the dependencies of useMemo Hook (at line 33) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'categories' in its own useMemo() Hook.
+  167:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Dashboard.tsx
+  153:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Discount.tsx
+  13:9 - react-hooks/exhaustive-deps (1) - The 'discounts' logical expression could make the dependencies of useMemo Hook (at line 45) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'discounts' in its own useMemo() Hook.
+  223:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Inventories.tsx
+  13:14 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+  34:9 - react-hooks/exhaustive-deps (1) - The 'inventories' logical expression could make the dependencies of useMemo Hook (at line 43) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'inventories' in its own useMemo() Hook.
+  35:9 - react-hooks/exhaustive-deps (1) - The 'products' logical expression could make the dependencies of useMemo Hook (at line 43) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'products' in its own useMemo() Hook.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Orders.tsx
+  15:9 - react-hooks/exhaustive-deps (1) - The 'orders' logical expression could make the dependencies of useEffect Hook (at line 30) change on every render. To fix this, wrap the initialization of 'orders' in its own useMemo() Hook.
+  15:9 - react-hooks/exhaustive-deps (1) - The 'orders' logical expression could make the dependencies of useMemo Hook (at line 73) change on every render. To fix this, wrap the initialization of 'orders' in its own useMemo() Hook.
+  225:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Products.tsx
+  10:14 - @typescript-eslint/no-empty-object-type (2) - The `{}` ("empty object") type allows any non-nullish value, including literals like `0` and `""`.
+- If that's what you want, disable this lint rule with an inline comment or configure the 'allowObjectTypes' rule option.
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.
+  57:6 - react-hooks/exhaustive-deps (1) - React Hook useEffect has a missing dependency: 'loadProducts'. Either include it or remove the dependency array.
+  314:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Reviews.tsx
+  14:9 - react-hooks/exhaustive-deps (1) - The 'reviews' logical expression could make the dependencies of useMemo Hook (at line 46) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'reviews' in its own useMemo() Hook.
+  248:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Tickets.tsx
+  67:6 - react-hooks/exhaustive-deps (1) - React Hook React.useEffect has a missing dependency: 'loadTickets'. Either include it or remove the dependency array.
+D:\DATN_TMDT\congdc\congdc\frontend\src\pages\admin\Users.tsx
+  14:9 - react-hooks/exhaustive-deps (1) - The 'users' logical expression could make the dependencies of useMemo Hook (at line 62) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'users' in its own useMemo() Hook.
+  346:23 - react-refresh/only-export-components (2) - Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.

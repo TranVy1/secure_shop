@@ -114,8 +114,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             UUID userId = UUID.fromString(decoded.getSubject());
-            User user = userService.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+            String emailClaim = decoded.getClaim("email").asString();
+            String roleClaim = decoded.getClaim("role").asString();
+            
+            User user = new User();
+            user.setId(userId);
+            if (emailClaim != null) user.setEmail(emailClaim);
+            if (roleClaim != null) {
+                try {
+                    user.setRole(secure_shop.backend.enums.Role.valueOf(roleClaim));
+                } catch (Exception e) {
+                    user.setRole(secure_shop.backend.enums.Role.USER);
+                }
+            }
+            user.setEnabled(true);
 
             CustomUserDetails userDetails = new CustomUserDetails(user);
             UsernamePasswordAuthenticationToken auth =

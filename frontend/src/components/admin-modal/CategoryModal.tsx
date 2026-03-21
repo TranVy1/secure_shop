@@ -54,7 +54,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const maxSize = 5 * 1024 * 1024; 
+      const maxSize = 5 * 1024 * 1024;
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
       if (file.size > maxSize) {
@@ -82,10 +82,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
 
     try {
       if (selectedFile) {
-        const uploadResult = await imageUploadService.uploadImage(selectedFile, {
-          bucket: 'categories',
-          folder: 'category-images'
-        });
+        const uploadResult = await imageUploadService.uploadImage(selectedFile);
         uploadedImageUrl = uploadResult.url;
       }
 

@@ -10,6 +10,7 @@ interface InventoriesProps {
   onReload: () => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const loadData = async () => {
   try {
     const [inventories, productsResponse] = await Promise.all([
@@ -31,15 +32,15 @@ const Inventories: React.FC<InventoriesProps> = ({ data, onReload }) => {
   const [showModal, setShowModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'in-stock' | 'low-stock' | 'out-of-stock'>('all');
 
-  const inventories = (data as any)?.inventories || [];
-  const products: ProductSummary[] = (data as any)?.products || [];
-  
+  const inventories = useMemo(() => (data as any)?.inventories || [], [data]);
+  const products: ProductSummary[] = useMemo(() => (data as any)?.products || [], [data]);
+
   const inventoriesWithProducts = useMemo(() => {
     const productMap = new Map(products.map(p => [p.id, p]));
     return inventories.map((inv: any) => ({
       ...inv,
       product: productMap.get(inv.productId)
-    })).filter((inv: any) => inv.product); 
+    })).filter((inv: any) => inv.product);
   }, [inventories, products]);
 
   const filteredInventories = useMemo(() => {
@@ -169,41 +170,37 @@ const Inventories: React.FC<InventoriesProps> = ({ data, onReload }) => {
         <div className="flex gap-2">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filterStatus === 'all'
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'all'
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+              }`}
           >
             Tất cả
           </button>
           <button
             onClick={() => setFilterStatus('in-stock')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filterStatus === 'in-stock'
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'in-stock'
                 ? 'bg-green-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+              }`}
           >
             Còn hàng
           </button>
           <button
             onClick={() => setFilterStatus('low-stock')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filterStatus === 'low-stock'
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'low-stock'
                 ? 'bg-orange-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+              }`}
           >
             Sắp hết
           </button>
           <button
             onClick={() => setFilterStatus('out-of-stock')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filterStatus === 'out-of-stock'
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'out-of-stock'
                 ? 'bg-red-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+              }`}
           >
             Hết hàng
           </button>
@@ -237,7 +234,7 @@ const Inventories: React.FC<InventoriesProps> = ({ data, onReload }) => {
               ) : (
                 filteredInventories.map((inventory) => {
                   if (!inventory.product) return null;
-                  
+
                   const available = inventory.onHand - inventory.reserved;
                   let statusBadge;
                   if (available <= 0) {

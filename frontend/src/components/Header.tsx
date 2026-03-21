@@ -23,7 +23,6 @@ import { authService } from "../utils/authService";
 
 const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,11 +38,8 @@ const Header: React.FC = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
-
   const handleLogout = async () => {
     await authService.logout();
-    setIsUserMenuOpen(false);
     setIsMobileMenuOpen(false);
   };
 
@@ -54,7 +50,7 @@ const Header: React.FC = () => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -96,7 +92,7 @@ const Header: React.FC = () => {
   const toggleSearch = () => {
     const newState = !isSearchOpen;
     setIsSearchOpen(newState);
-    
+
     if (newState) {
       // Use requestAnimationFrame for better timing with animations
       requestAnimationFrame(() => {
@@ -179,15 +175,14 @@ const Header: React.FC = () => {
   };
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `relative font-medium transition-colors pb-1 after:content-[''] after:absolute after:left-0 after:-bottom-[2px] after:h-[2px] after:w-full after:scale-x-0 after:origin-right after:transition-transform after:duration-300 ${
-      isActive
-        ? "text-purple-600 after:scale-x-100 after:origin-left after:bg-purple-600"
-        : "text-zinc-800 hover:text-purple-600 hover:after:scale-x-100 hover:after:origin-left after:bg-purple-300"
+    `relative font-medium transition-colors pb-1 after:content-[''] after:absolute after:left-0 after:-bottom-[2px] after:h-[2px] after:w-full after:scale-x-0 after:origin-right after:transition-transform after:duration-300 ${isActive
+      ? "text-purple-600 after:scale-x-100 after:origin-left after:bg-purple-600"
+      : "text-zinc-800 hover:text-purple-600 hover:after:scale-x-100 hover:after:origin-left after:bg-purple-300"
     }`;
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50 w-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white shadow-md sticky top-0 z-50 w-full overflow-x-hidden">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
@@ -225,7 +220,7 @@ const Header: React.FC = () => {
                   <motion.div
                     key="search-open"
                     initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 380, opacity: 1 }}
+                    animate={{ width: "min(380px, calc(100vw - 200px))", opacity: 1 }}
                     exit={{ width: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                     className="overflow-hidden"
@@ -257,7 +252,7 @@ const Header: React.FC = () => {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -10, scale: 0.95 }}
                           transition={{ duration: 0.2 }}
-                          className="absolute top-full mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 max-h-[480px] overflow-y-auto"
+                          className="absolute top-full mt-2 w-full max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 max-h-[480px] overflow-y-auto"
                         >
                           {isSearching ? (
                             <div className="px-4 py-8 text-center">
@@ -426,9 +421,9 @@ const Header: React.FC = () => {
 
             {/* User menu */}
             {isAuthenticated && user ? (
-              <div className="relative">
-                <button
-                  onClick={toggleUserMenu}
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/profile"
                   className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   {user.avatarUrl ? (
@@ -443,45 +438,14 @@ const Header: React.FC = () => {
                   <span className="max-w-32 truncate">
                     {user.name || user.email}
                   </span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  title="Đăng xuất"
+                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="h-5 w-5" />
                 </button>
-
-                <AnimatePresence>
-                  {isUserMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
-                    >
-                      <div className="py-2">
-                        <Link
-                          to="/profile"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <UserCircle className="h-4 w-4 mr-2" />
-                          Thông tin cá nhân
-                        </Link>
-                        <Link
-                          to="/orders"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Package className="h-4 w-4 mr-2" />
-                          Đơn hàng của tôi
-                        </Link>
-                        <hr className="my-1" />
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Đăng xuất
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             ) : (
               <Link
@@ -709,10 +673,9 @@ const Header: React.FC = () => {
               <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${
-                    isActive
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
+                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${isActive
+                    ? "bg-purple-100 text-purple-700"
+                    : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
                   }`
                 }
                 onClick={toggleMobileMenu}
@@ -722,10 +685,9 @@ const Header: React.FC = () => {
               <NavLink
                 to="/products"
                 className={({ isActive }) =>
-                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${
-                    isActive
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
+                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${isActive
+                    ? "bg-purple-100 text-purple-700"
+                    : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
                   }`
                 }
                 onClick={toggleMobileMenu}
@@ -735,10 +697,9 @@ const Header: React.FC = () => {
               <NavLink
                 to="/about"
                 className={({ isActive }) =>
-                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${
-                    isActive
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
+                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${isActive
+                    ? "bg-purple-100 text-purple-700"
+                    : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
                   }`
                 }
                 onClick={toggleMobileMenu}
@@ -748,25 +709,23 @@ const Header: React.FC = () => {
               <NavLink
                 to="/contact"
                 className={({ isActive }) =>
-                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${
-                    isActive
-                      ? "bg-purple-100 text-purple-700"
-                      : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
+                  `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${isActive
+                    ? "bg-purple-100 text-purple-700"
+                    : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
                   }`
                 }
                 onClick={toggleMobileMenu}
               >
                 Liên hệ
               </NavLink>
-              
+
               {user?.role?.toLowerCase() === "admin" && (
                 <NavLink
                   to="/admin"
                   className={({ isActive }) =>
-                    `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${
-                      isActive
-                        ? "bg-purple-100 text-purple-700"
-                        : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
+                    `block w-full px-3 py-2.5 rounded-md text-base font-medium text-center ${isActive
+                      ? "bg-purple-100 text-purple-700"
+                      : "text-zinc-700 hover:bg-purple-50 hover:text-purple-600"
                     }`
                   }
                   onClick={toggleMobileMenu}

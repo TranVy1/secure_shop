@@ -5,16 +5,15 @@ import { orderApi } from '../../utils/api';
 import OrderDetailsModal from '../../components/admin-modal/OrderDetailsModal';
 import Pagination from '../../components/Pagination';
 
-type Props = { 
+type Props = {
   data?: { content: Order[]; page: { totalPages: number; totalElements: number; number: number; size: number } };
   onReload?: () => void;
   onPageChange?: (page: number, size: number) => void;
 };
-
 const Orders: React.FC<Props> = ({ data, onReload, onPageChange }) => {
-  const orders = data?.content || [];
-  const pagination = data?.page || { totalPages: 0, totalElements: 0, number: 0, size: 20 };
-  
+  const orders = useMemo(() => data?.content || [], [data]);
+  const pagination = useMemo(() => data?.page || { totalPages: 0, totalElements: 0, number: 0, size: 20 }, [data]);
+
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +66,7 @@ const Orders: React.FC<Props> = ({ data, onReload, onPageChange }) => {
     }
 
     // Sort by created date (newest first)
-    return filtered.sort((a: Order, b: Order) => 
+    return filtered.sort((a: Order, b: Order) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [orders, searchTerm, statusFilter]);
@@ -83,7 +82,7 @@ const Orders: React.FC<Props> = ({ data, onReload, onPageChange }) => {
     };
     const config = statusConfig[status] || statusConfig.PENDING;
     const Icon = config.icon;
-    
+
     return (
       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
         <Icon className="w-3 h-3" />
@@ -108,7 +107,7 @@ const Orders: React.FC<Props> = ({ data, onReload, onPageChange }) => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-80"
             />
           </div>
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -147,7 +146,7 @@ const Orders: React.FC<Props> = ({ data, onReload, onPageChange }) => {
                   <td className="px-6 py-4 text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
                   <td className="px-6 py-4 text-sm text-right">
                     <div className="flex flex-col gap-2 items-end">
-                      <button 
+                      <button
                         onClick={() => handleViewDetails(order.id)}
                         className="inline-flex items-center gap-1 px-3 py-1 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                       >
@@ -222,6 +221,7 @@ const Orders: React.FC<Props> = ({ data, onReload, onPageChange }) => {
 
 export default Orders;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData(page: number = 0, size: number = 20) {
   try {
     const response = await orderApi.getAll({ page, size, sort: 'createdAt,DESC' });

@@ -159,16 +159,20 @@ const Contact: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Header />
       {/* Hero Section */}
-      <section className="relative h-[300px] bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
+      <section className="relative py-20 lg:py-24 bg-gradient-to-r from-purple-600 to-cyan-500 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-white opacity-10 rounded-full mix-blend-overlay filter blur-3xl transform -translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-300 opacity-20 rounded-full mix-blend-overlay filter blur-3xl transform translate-y-1/2"></div>
+
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24 flex items-center justify-center text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-white"
+            className="text-white max-w-3xl"
           >
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Liên Hệ Với Chúng Tôi</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">Liên Hệ Với Chúng Tôi</h1>
             <p className="text-xl md:text-2xl opacity-90">
               Chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7
             </p>
@@ -178,7 +182,7 @@ const Contact: React.FC = () => {
 
       {/* Contact Info Cards */}
       <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {contactInfo.map((info, index) => {
               const Icon = info.icon;
@@ -214,7 +218,7 @@ const Contact: React.FC = () => {
 
       {/* Contact Form & Map Section */}
       <section className="py-12 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Form */}
             <motion.div
@@ -404,7 +408,7 @@ const Contact: React.FC = () => {
 
       {/* Branches Section */}
       <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -456,7 +460,7 @@ const Contact: React.FC = () => {
 
       {/* FAQ Section */}
       <section className="py-12 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

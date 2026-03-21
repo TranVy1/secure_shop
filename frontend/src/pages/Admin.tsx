@@ -1,305 +1,344 @@
 import React, { useEffect, useState } from 'react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { 
-  LayoutDashboard, 
-  Package, 
-  FolderTree, 
-  Tag, 
-  ShoppingCart, 
-  Percent, 
-  Users, 
-  FileText, 
-  MessageSquare, 
-  BarChart3,
-  Warehouse,
-  Star
+import {
+  LayoutDashboard, Package, FolderTree, Tag, ShoppingCart,
+  Percent, Users, FileText, MessageSquare, BarChart3,
+  Warehouse, Star, Store, ChevronRight, LogOut, Bell
 } from 'lucide-react';
+import { useAppSelector } from '../hooks';
 
-// Type for admin modules
 interface AdminModule {
   default: React.FC<any>;
   loadData?: (page?: number, size?: number) => Promise<any>;
 }
 
 type TabKey =
-  | 'dashboard'
-  | 'products'
-  | 'categories'
-  | 'brands'
-  | 'orders'
-  | 'inventories'
-  | 'discount'
-  | 'users'
-  | 'articles'
-  | 'tickets'
-  | 'analytics'
-  | 'reviews';
+  | 'dashboard' | 'products' | 'categories' | 'brands'
+  | 'orders' | 'inventories' | 'discount' | 'users'
+  | 'articles' | 'tickets' | 'analytics' | 'reviews' | 'pos';
 
-const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-  { key: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-5 h-5" /> },
-  { key: 'products', label: 'Sản phẩm', icon: <Package className="w-5 h-5" /> },
-  { key: 'categories', label: 'Danh mục', icon: <FolderTree className="w-5 h-5" /> },
-  { key: 'brands', label: 'Thương hiệu', icon: <Tag className="w-5 h-5" /> },
-  { key: 'orders', label: 'Đơn hàng', icon: <ShoppingCart className="w-5 h-5" /> },
-  { key: 'inventories', label: 'Tồn kho', icon: <Warehouse className="w-5 h-5" /> },
-  { key: 'discount', label: 'Khuyến mãi', icon: <Percent className="w-5 h-5" /> },
-  { key: 'users', label: 'Người dùng', icon: <Users className="w-5 h-5" /> },
-  { key: 'articles', label: 'Bài viết', icon: <FileText className="w-5 h-5" /> },
-  { key: 'tickets', label: 'Hỗ trợ', icon: <MessageSquare className="w-5 h-5" /> },
-  { key: 'reviews', label: 'Đánh giá', icon: <Star className="w-5 h-5" /> },
-  { key: 'analytics', label: 'Thống kê', icon: <BarChart3 className="w-5 h-5" /> },
+const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode; group?: string }[] = [
+  { key: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-4 h-4" />, group: 'main' },
+  { key: 'pos', label: 'Bán hàng (POS)', icon: <Store className="w-4 h-4" />, group: 'main' },
+  { key: 'products', label: 'Sản phẩm', icon: <Package className="w-4 h-4" />, group: 'catalog' },
+  { key: 'categories', label: 'Danh mục', icon: <FolderTree className="w-4 h-4" />, group: 'catalog' },
+  { key: 'brands', label: 'Thương hiệu', icon: <Tag className="w-4 h-4" />, group: 'catalog' },
+  { key: 'orders', label: 'Đơn hàng', icon: <ShoppingCart className="w-4 h-4" />, group: 'ops' },
+  { key: 'inventories', label: 'Tồn kho', icon: <Warehouse className="w-4 h-4" />, group: 'ops' },
+  { key: 'discount', label: 'Khuyến mãi', icon: <Percent className="w-4 h-4" />, group: 'ops' },
+  { key: 'users', label: 'Người dùng', icon: <Users className="w-4 h-4" />, group: 'system' },
+  { key: 'articles', label: 'Bài viết', icon: <FileText className="w-4 h-4" />, group: 'system' },
+  { key: 'tickets', label: 'Hỗ trợ', icon: <MessageSquare className="w-4 h-4" />, group: 'system' },
+  { key: 'reviews', label: 'Đánh giá', icon: <Star className="w-4 h-4" />, group: 'system' },
+  { key: 'analytics', label: 'Thống kê', icon: <BarChart3 className="w-4 h-4" />, group: 'system' },
 ];
 
+const GROUPS = [
+  { id: 'main', label: 'Chính' },
+  { id: 'catalog', label: 'Danh mục' },
+  { id: 'ops', label: 'Vận hành' },
+  { id: 'system', label: 'Hệ thống' },
+];
+
+// POS gets no padding — fully manages its own layout
+const POS_FULLSCREEN_TABS: TabKey[] = ['pos'];
+
 const Admin: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+  const { user } = useAppSelector((state) => state.auth);
+
+  const visibleTabs = user?.role?.toLowerCase() === 'staff'
+    ? ALL_TABS.filter(t => t.key === 'pos' || t.key === 'orders')
+    : ALL_TABS;
+
+  const defaultTab: TabKey = user?.role?.toLowerCase() === 'staff' ? 'pos' : 'dashboard';
+  const [activeTab, setActiveTab] = useState<TabKey>(defaultTab);
   const [loading, setLoading] = useState(false);
-  const [LoadedComponent, setLoadedComponent] = useState<React.FC<any> | null>(null);
+  const [LoadedComponent, setLoaded] = useState<React.FC<any> | null>(null);
   const [data, setData] = useState<any>(null);
-  const [currentLoadData, setCurrentLoadData] = useState<((page?: number, size?: number) => Promise<any>) | null>(null);
+  const [currentLoadData, setCLD] = useState<((p?: number, s?: number) => Promise<any>) | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
 
+  // Correct active tab if role changes
+  useEffect(() => {
+    const isStaff = user?.role?.toLowerCase() === 'staff';
+    if (isStaff && !['pos', 'orders'].includes(activeTab)) setActiveTab('pos');
+  }, [user?.role, activeTab]);
+
   const handlePageChange = async (page: number, size: number) => {
-    setCurrentPage(page);
-    setPageSize(size);
-    
+    setCurrentPage(page); setPageSize(size);
     if (currentLoadData) {
-      try {
-        setLoading(true);
-        const newData = await currentLoadData(page, size);
-        setData(newData);
-      } catch (error) {
-        console.error('Error loading page:', error);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      try { setData(await currentLoadData(page, size)); }
+      catch (e) { console.error(e); }
+      finally { setLoading(false); }
     }
   };
 
   const reloadCurrentTab = async () => {
     if (currentLoadData) {
       setLoading(true);
-      try {
-        const newData = await currentLoadData(currentPage, pageSize);
-        setData(newData);
-      } catch (error) {
-        console.error('Error reloading:', error);
-      } finally {
-        setLoading(false);
-      }
+      try { setData(await currentLoadData(currentPage, pageSize)); }
+      catch (e) { console.error(e); }
+      finally { setLoading(false); }
     }
   };
 
   useEffect(() => {
     let mounted = true;
-
     const loadForTab = async (tab: TabKey) => {
-      setLoading(true);
-      setData(null);
-      setLoadedComponent(null);
-      setCurrentPage(0); // Reset page when switching tabs
-      setPageSize(20); // Reset page size
-
+      setLoading(true); setData(null); setLoaded(null);
+      setCurrentPage(0); setPageSize(20);
       try {
-        switch (tab) {
-          case 'dashboard': {
-            const mod = await import('./admin/Dashboard') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'categories': {
-            const mod = await import('./admin/Categories') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'brands': {
-            const mod = await import('./admin/Brands') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'orders': {
-            const mod = await import('./admin/Orders') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => (page = 0, size = 20) => mod.loadData?.(page, size) || Promise.resolve(null));
-            const d = await (mod.loadData?.(currentPage, pageSize) ?? null);
-            setData(d);
-            break;
-          }
-          case 'inventories': {
-            const mod = await import('./admin/Inventories') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'products': {
-            const mod = await import('./admin/Products') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'discount': {
-            const mod = await import('./admin/Discount') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'users': {
-            const mod = await import('./admin/Users') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'articles': {
-            const mod = await import('./admin/Articles') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'tickets': {
-            const mod = await import('./admin/Tickets') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          case 'analytics': {
-            const mod = await import('./admin/Analytics') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            // Analytics component loads its own data via useEffect
-            setCurrentLoadData(() => () => Promise.resolve(null));
-            setData(null);
-            break;
-          }
-          case 'reviews': {
-            const mod = await import('./admin/Reviews') as AdminModule;
-            if (!mounted) return;
-            setLoadedComponent(() => mod.default);
-            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
-            const d = await (mod.loadData?.() ?? null);
-            setData(d);
-            break;
-          }
-          default:
-            break;
-        }
+        const mods: Record<TabKey, () => Promise<AdminModule>> = {
+          dashboard: () => import('./admin/Dashboard'),
+          pos: () => import('./admin/POS'),
+          categories: () => import('./admin/Categories'),
+          brands: () => import('./admin/Brands'),
+          orders: () => import('./admin/Orders'),
+          inventories: () => import('./admin/Inventories'),
+          products: () => import('./admin/Products'),
+          discount: () => import('./admin/Discount'),
+          users: () => import('./admin/Users'),
+          articles: () => import('./admin/Articles'),
+          tickets: () => import('./admin/Tickets'),
+          analytics: () => import('./admin/Analytics'),
+          reviews: () => import('./admin/Reviews'),
+        };
+        const mod = await mods[tab]();
+        if (!mounted) return;
+        setLoaded(() => mod.default);
+        setCLD(() => mod.loadData || (() => Promise.resolve(null)));
+        const loader = tab === 'orders' ? () => mod.loadData?.(0, 20) ?? null : () => mod.loadData?.() ?? null;
+        if (!['pos', 'analytics'].includes(tab)) setData(await loader());
       } finally {
         if (mounted) setLoading(false);
       }
     };
-
     loadForTab(activeTab);
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [activeTab]);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+  const isPosFullscreen = POS_FULLSCREEN_TABS.includes(activeTab);
+  const tabLabel = ALL_TABS.find(t => t.key === activeTab)?.label ?? '';
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-purple-600 to-cyan-500 rounded-2xl shadow-lg p-8 text-white">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2">Quản Trị Hệ Thống</h1>
-            <p className="text-purple-100 text-lg">
-              Quản lý toàn bộ nội dung và dữ liệu của website
-            </p>
+  return (
+    <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', background: '#f1f5f9' }}>
+
+      {/* ════════════════════════════════════════
+          SIDEBAR — Fixed left 240px
+      ════════════════════════════════════════ */}
+      <aside style={{
+        width: 240, minWidth: 240, height: '100vh',
+        background: '#1e1b4b',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden', flexShrink: 0,
+        position: 'relative', zIndex: 40,
+      }}>
+        {/* Brand */}
+        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>S</span>
+            </div>
+            <div>
+              <p style={{ color: '#fff', fontWeight: 800, fontSize: 15, lineHeight: 1 }}>SecureShop</p>
+              <p style={{ color: '#818cf8', fontSize: 11, marginTop: 2 }}>Admin Panel</p>
+            </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Navigation */}
-          <aside className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm p-4 sticky top-24">
-              <nav className="space-y-1">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-                      activeTab === tab.key
-                        ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-md transform scale-[1.02]'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-purple-600'
-                    }`}
-                  >
-                    <span className={activeTab === tab.key ? 'text-white' : 'text-gray-500'}>
-                      {tab.icon}
-                    </span>
-                    <span className="font-medium">{tab.label}</span>
-                  </button>
-                ))}
-              </nav>
+        {/* Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 8px' }}>
+          {GROUPS.map(group => {
+            const groupTabs = visibleTabs.filter(t => t.group === group.id);
+            if (!groupTabs.length) return null;
+            return (
+              <div key={group.id} style={{ marginBottom: 20 }}>
+                <p style={{
+                  fontSize: 10, fontWeight: 700, color: '#4c4a7a', textTransform: 'uppercase',
+                  letterSpacing: '1px', padding: '0 8px', marginBottom: 4
+                }}>
+                  {group.label}
+                </p>
+                {groupTabs.map(tab => {
+                  const active = activeTab === tab.key;
+                  return (
+                    <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '9px 10px', borderRadius: 8, border: 'none',
+                        cursor: 'pointer', textAlign: 'left', marginBottom: 2,
+                        background: active ? 'rgba(99,102,241,.25)' : 'transparent',
+                        transition: 'all .15s ease',
+                      }}
+                      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.06)'; }}
+                      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                    >
+                      <span style={{ color: active ? '#818cf8' : '#6b7280', flexShrink: 0 }}>
+                        {tab.icon}
+                      </span>
+                      <span style={{ fontSize: 13, fontWeight: active ? 700 : 400, color: active ? '#e0e7ff' : '#9ca3af', flex: 1 }}>
+                        {tab.label}
+                      </span>
+                      {active && <ChevronRight style={{ width: 12, height: 12, color: '#818cf8' }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* User footer */}
+        <div style={{ padding: '12px 12px', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8,
+            background: 'rgba(255,255,255,.05)'
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+            }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
+              </span>
             </div>
-          </aside>
-
-          {/* Content Area */}
-          <section className="flex-1 min-h-[500px]">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              {loading && (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
-                  <p className="text-gray-600 font-medium">Đang tải dữ liệu...</p>
-                </div>
-              )}
-
-              {!loading && LoadedComponent && (
-                <div className="animate-fadeIn">
-                  <LoadedComponent 
-                    data={data} 
-                    onReload={reloadCurrentTab}
-                    onPageChange={activeTab === 'orders' ? handlePageChange : undefined}
-                  />
-                </div>
-              )}
-
-              {!loading && !LoadedComponent && (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <LayoutDashboard className="w-10 h-10 text-purple-600" />
-                  </div>
-                  <p className="text-gray-600 text-lg">Chọn một mục từ menu để bắt đầu</p>
-                </div>
-              )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#e0e7ff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user?.name ?? 'Admin'}
+              </p>
+              <p style={{ fontSize: 10, color: '#6366f1', fontWeight: 500 }}>
+                {user?.role?.toUpperCase() ?? 'ADMIN'}
+              </p>
             </div>
-          </section>
+            <button title="Đăng xuất" style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#4c4a7a', padding: 4, borderRadius: 6
+            }}
+              onMouseEnter={e => (e.currentTarget).style.color = '#ef4444'}
+              onMouseLeave={e => (e.currentTarget).style.color = '#4c4a7a'}
+              onClick={() => window.location.href = '/login'}>
+              <LogOut style={{ width: 14, height: 14 }} />
+            </button>
+          </div>
         </div>
-      </main>
+      </aside>
 
-      <Footer />
+      {/* ════════════════════════════════════════
+          RIGHT SIDE: header + content
+      ════════════════════════════════════════ */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+        {/* TOP HEADER BAR — 56px */}
+        <header style={{
+          height: 56, flexShrink: 0,
+          background: '#fff',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex', alignItems: 'center',
+          padding: '0 24px', gap: 16,
+          zIndex: 30,
+        }}>
+          {/* Breadcrumb */}
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>SecureShop Admin</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', lineHeight: 1.2 }}>{tabLabel}</p>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button style={{
+              width: 36, height: 36, borderRadius: 8, border: '1.5px solid #e2e8f0',
+              background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', color: '#64748b', position: 'relative',
+            }}>
+              <Bell style={{ width: 16, height: 16 }} />
+              <span style={{
+                position: 'absolute', top: 6, right: 6, width: 7, height: 7,
+                background: '#ef4444', borderRadius: '50%', border: '1.5px solid #fff',
+              }} />
+            </button>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
+              background: '#f8fafc', borderRadius: 8, border: '1.5px solid #e2e8f0'
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: 12 }}>
+                  {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>{user?.name ?? 'Admin'}</p>
+                <p style={{ fontSize: 10, color: '#94a3b8' }}>{user?.email ?? ''}</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* ══════════════════════════════════
+            CONTENT AREA — fills remaining
+        ══════════════════════════════════ */}
+        <main style={{
+          flex: 1,
+          overflow: isPosFullscreen ? 'hidden' : 'auto',
+          background: '#f1f5f9',
+          padding: isPosFullscreen ? 0 : '24px',
+          width: '100%',
+          minWidth: 0,
+        }}>
+
+          {/* Loading */}
+          {loading && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', height: '100%', minHeight: 300
+            }}>
+              <div style={{
+                width: 40, height: 40, border: '3px solid #e0e7ff',
+                borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin .7s linear infinite', marginBottom: 12
+              }} />
+              <p style={{ color: '#6366f1', fontWeight: 600, fontSize: 14 }}>Đang tải...</p>
+            </div>
+          )}
+
+          {/* Content */}
+          {!loading && LoadedComponent && (
+            <LoadedComponent
+              data={data}
+              onReload={reloadCurrentTab}
+              onPageChange={activeTab === 'orders' ? handlePageChange : undefined}
+            />
+          )}
+
+          {/* Empty state */}
+          {!loading && !LoadedComponent && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', height: '100%', minHeight: 300
+            }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: 20, background: '#ede9fe',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16
+              }}>
+                <LayoutDashboard style={{ width: 28, height: 28, color: '#7c3aed' }} />
+              </div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#475569' }}>Chọn mục từ sidebar để bắt đầu</p>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Global spin keyframe */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };

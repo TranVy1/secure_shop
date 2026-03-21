@@ -13,6 +13,9 @@ import secure_shop.backend.mapper.BrandMapper;
 import secure_shop.backend.repositories.BrandRepository;
 import secure_shop.backend.service.BrandService;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+
 @Service
 @RequiredArgsConstructor
 public class BrandServiceImpl implements BrandService {
@@ -29,6 +32,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "brand", key = "#id")
     public BrandDTO getBrandById(Long id) {
         Brand brand = brandRepository.findById(id);
 
@@ -49,6 +53,7 @@ public class BrandServiceImpl implements BrandService {
     }
 
     @Override
+    @CacheEvict(value = "brand", key = "#id")
     public BrandDTO updateBrand(Long id, BrandDTO dto) {
         Brand brand = brandRepository.findById(id);
         if (brand == null) {
@@ -63,6 +68,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "brand", key = "#id")
     public void deleteBrand(Long id) {
         Brand brand = brandRepository.findById(id);
         if (brand == null) {

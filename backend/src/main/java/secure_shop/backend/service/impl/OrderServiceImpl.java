@@ -415,4 +415,22 @@ public class OrderServiceImpl implements OrderService {
     public Integer getTotalOrdersCount() {
         return orderRepository.countOrdersByCreatedAtIsNotNull();
     }
+
+    /**
+     * POS checkout: tạo đơn → xác nhận → giao hàng trong 1 transaction duy nhất.
+     * Nếu bất kỳ bước nào fail, toàn bộ sẽ rollback — không để order ở trạng thái dở.
+     */
+    @Override
+    @Transactional
+    public OrderDTO createAndCompleteOrder(OrderCreateRequest request, UUID staffId) {
+        // 1. Tạo đơn hàng (reserve stock)
+        OrderDTO created = createOrder(request, staffId);
+        UUID orderId = created.getId();
+
+        // 2. Xác nhận (consume reserved stock → WAITING_FOR_DELIVERY)
+        confirmOrder(orderId);
+
+        // 3. Chuyển sang DELIVERED (mark paid)
+        return changeOrderStatus(orderId, OrderStatus.DELIVERED.name());
+    }
 }

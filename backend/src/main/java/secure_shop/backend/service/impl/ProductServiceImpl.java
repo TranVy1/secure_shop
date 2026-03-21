@@ -10,7 +10,11 @@ import secure_shop.backend.entities.*;
 import secure_shop.backend.exception.ResourceNotFoundException;
 import secure_shop.backend.mapper.ProductMapper;
 import secure_shop.backend.repositories.*;
+import secure_shop.backend.service.BarcodeService;
 import secure_shop.backend.service.ProductService;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -29,6 +33,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
     private final InventoryRepository inventoryRepository;
+    private final BarcodeService barcodeService;
     @Override
     public Page<ProductSummaryDTO> filterProducts(Boolean active,
                                                   Long categoryId,
@@ -43,6 +48,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = "product", key = "#id")
     public ProductDTO getProductById(UUID id) {
         Product product = productRepository.findProductById(id);
         if (product == null) {
@@ -53,6 +59,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "productDetails", key = "#id")
     public ProductDetailsDTO getProductDetailsById(UUID id) {
         return productRepository.findByIdWithRelations(id)
                 .map(productMapper::toProductDetailsDTO)
@@ -86,11 +93,20 @@ public class ProductServiceImpl implements ProductService {
                     .collect(Collectors.toList());
             product.setMediaAssets(mediaAssets);
         }
+
+        // Tự động tạo barcode cho sản phẩm mới
+        try {
+            barcodeService.autoGenerateForProduct(saved.getId(), saved.getSku());
+        } catch (Exception e) {
+            // Không fail nếu barcode tạo lỗi
+        }
+
         return productMapper.toProductDTO(saved);
     }
 
     @Override
     @Transactional
+    @CacheEvict(value = {"product", "productDetails"}, key = "#id")
     public ProductDTO updateProduct(UUID id, ProductDetailsDTO dto) {
         Product existing = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
@@ -159,6 +175,7 @@ public class ProductServiceImpl implements ProductService {
     // Soft delete
     @Override
     @Transactional
+    @CacheEvict(value = {"product", "productDetails"}, key = "#id")
     public Boolean deleteProduct(UUID id) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) {
@@ -176,6 +193,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Transactional
+    @CacheEvict(value = {"product", "productDetails"}, key = "#id")
     public ProductDTO restoreProduct(UUID id) {
         Product product = productRepository.findDeletedById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Deleted Product", id));

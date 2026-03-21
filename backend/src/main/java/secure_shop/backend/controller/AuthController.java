@@ -20,6 +20,7 @@ import secure_shop.backend.exception.ForbiddenException;
 import secure_shop.backend.exception.UnauthorizedException;
 import secure_shop.backend.security.jwt.JwtService;
 import secure_shop.backend.service.PasswordResetService;
+import secure_shop.backend.service.RateLimitingService;
 import secure_shop.backend.service.UserService;
 
 import org.springframework.http.HttpStatus; // Thêm 
@@ -44,6 +45,7 @@ public class AuthController {
     private final UserService userService;
     private final PasswordResetService resetService;
     private final VerificationService verificationService;
+    private final RateLimitingService rateLimitingService;
 
     /**
      * Xác thực email
@@ -71,9 +73,11 @@ public class AuthController {
     @PostMapping("/resend-verification")
     public ResponseEntity<?> resendVerification(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email không được để trống"));
+        }
         try {
-            verificationService.resendVerificationEmail(email);
+            verificationService.resendVerificationEmail(email.trim().toLowerCase());
             return ResponseEntity.ok(Map.of(
                 "message", "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư."
             ));
@@ -86,7 +90,13 @@ public class AuthController {
 
     // ====== REGISTER ======
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        String ip = getClientIP(httpRequest);
+        if (!rateLimitingService.checkRateLimit("rate_limit:register:" + ip, 5, Duration.ofMinutes(15))) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Bạn đã đăng ký quá nhiều lần. Vui lòng thử lại sau."));
+        }
+
         userService.registerUser(request);
         
         // Trả về response thành công
@@ -96,7 +106,13 @@ public class AuthController {
 
     // ====== LOGIN ======
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req, HttpServletRequest request, HttpServletResponse response) {
+        String ip = getClientIP(request);
+        if (!rateLimitingService.checkRateLimit("rate_limit:login:" + ip, 10, Duration.ofMinutes(15))) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Quá nhiều lần thử đăng nhập. Vui lòng thử lại sau."));
+        }
+
         // Xác thực tài khoản
         try {
             var token = new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword());
@@ -126,8 +142,8 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("None")
-                .path("/auth/refresh")
+                .sameSite("Lax")
+                .path("/api/auth/refresh")  // must match refresh endpoint path
                 .maxAge(Duration.ofSeconds(jwtService.getRefreshExpSeconds()))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
@@ -160,7 +176,7 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie.from("refresh_token", newRefresh)
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .path("/api/auth/refresh")
                 .maxAge(Duration.ofSeconds(jwtService.getRefreshExpSeconds()))
                 .build();
@@ -175,7 +191,7 @@ public class AuthController {
         ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("None")
+                .sameSite("Lax")
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .build();
@@ -220,7 +236,13 @@ public class AuthController {
 
     // forgot-password
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email, HttpServletRequest request) {
+        String ip = getClientIP(request);
+        if (!rateLimitingService.checkRateLimit("rate_limit:reset:" + ip, 3, Duration.ofMinutes(15))) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("message", "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau."));
+        }
+
         resetService.sendResetLink(email);
         return ResponseEntity.ok(Map.of("message", "Liên kết khôi phục đã được gửi đến email của bạn."));
     }
@@ -232,12 +254,24 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public String resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
         boolean ok = resetService.resetPassword(token, newPassword);
-        return ok ? "Đổi mật khẩu thành công." : "Token không hợp lệ hoặc đã hết hạn.";
+        if (ok) {
+            return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công."));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Token không hợp lệ hoặc đã hết hạn."));
+        }
     }
 
     // ====== Helper ======
+    private String getClientIP(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader != null && xfHeader.matches("[\\d.,: ]+")) {
+            return xfHeader.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
     private String extractRefreshToken(HttpServletRequest request) {
         if (request.getCookies() != null) {
             for (Cookie c : request.getCookies()) {

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Save, Loader2, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { productApi, categoryApi, brandApi, InventoryApi } from '../../utils/api';
+import { productApi, categoryApi, brandApi, InventoryApi, BarcodeApi } from '../../utils/api';
 import { imageUploadService } from '../../utils/imageUploadService';
 import type { ProductDetail, CategorySummary, Brand } from '../../types/types';
 
@@ -21,6 +21,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
+    barcode: '',
     listedPrice: 0,
     price: 0,
     categoryId: '',
@@ -61,24 +62,40 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   useEffect(() => {
     if (product && isOpen) {
-      setFormData({
-        name: product.name || '',
-        sku: product.sku || '',
-        listedPrice: product.listedPrice || 0,
-        price: product.price || 0,
-        categoryId: product.category?.id?.toString() || '',
-        brandId: product.brand?.id?.toString() || '',
-        shortDesc: product.shortDesc || '',
-        longDesc: product.longDesc || '',
-        active: product.active ?? true,
-        features: product.features || [],
-        specifications: product.specifications || {},
-        availableStock: product.availableStock || 0,
-        rating: product.rating || 0,
-        reviewCount: product.reviewCount || 0,
-      });
-      setThumbnailPreview(product.thumbnailUrl || null);
-      setExistingMediaUrls(product.mediaAssets?.map(m => m.url || '') || []);
+      const initFormData = async () => {
+        let fetchedBarcode = '';
+        try {
+          // Fetch existing barcode for this product
+          const barcodes = await BarcodeApi.getByProduct(product.id);
+          if (barcodes && barcodes.length > 0) {
+            fetchedBarcode = barcodes[0].barcode;
+          }
+        } catch (err) {
+          console.error("Lỗi tải barcode cho sản phẩm", err);
+        }
+
+        setFormData({
+          name: product.name || '',
+          sku: product.sku || '',
+          barcode: fetchedBarcode,
+          listedPrice: product.listedPrice || 0,
+          price: product.price || 0,
+          categoryId: product.category?.id?.toString() || '',
+          brandId: product.brand?.id?.toString() || '',
+          shortDesc: product.shortDesc || '',
+          longDesc: product.longDesc || '',
+          active: product.active ?? true,
+          features: product.features || [],
+          specifications: product.specifications || {},
+          availableStock: product.availableStock || 0,
+          rating: product.rating || 0,
+          reviewCount: product.reviewCount || 0,
+        });
+        setThumbnailPreview(product.thumbnailUrl || null);
+        setExistingMediaUrls(product.mediaAssets?.map(m => m.url || '') || []);
+      };
+
+      initFormData();
     } else {
       resetForm();
     }
@@ -181,10 +198,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     try {
       // Upload thumbnail
       if (thumbnailFile) {
-        const result = await imageUploadService.uploadImage(thumbnailFile, {
-          bucket: 'products',
-          folder: 'thumbnails'
-        });
+        const result = await imageUploadService.uploadImage(thumbnailFile);
         uploadedThumbnail = result.url;
       }
 
@@ -192,10 +206,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       if (mediaFiles.length > 0) {
         const mediaUploads = await Promise.all(
           mediaFiles.map(file =>
-            imageUploadService.uploadImage(file, {
-              bucket: 'products',
-              folder: 'media'
-            })
+            imageUploadService.uploadImage(file)
           )
         );
         uploadedMediaUrls = [...uploadedMediaUrls, ...mediaUploads.map(u => u.url)];
@@ -207,8 +218,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
         sku: formData.sku.trim(),
         listedPrice: formData.listedPrice,
         price: formData.price,
-        category: { id: parseInt(formData.categoryId) }, 
-        brand: formData.brandId ? { id: parseInt(formData.brandId) } : null, 
+        category: { id: parseInt(formData.categoryId) },
+        brand: formData.brandId ? { id: parseInt(formData.brandId) } : null,
         shortDesc: formData.shortDesc.trim(),
         longDesc: formData.longDesc.trim(),
         active: formData.active,
@@ -227,9 +238,8 @@ const ProductModal: React.FC<ProductModalProps> = ({
         }),
       }
 
-      let savedProduct: any;
       if (isEditing) {
-        savedProduct = await productApi.update(product.id, productData);
+        await productApi.update(product.id, productData);
         if (formData.availableStock !== product.availableStock) {
           const stockChange = formData.availableStock - (product.availableStock || 0);
           try {
@@ -250,7 +260,18 @@ const ProductModal: React.FC<ProductModalProps> = ({
           }
         }
       } else {
-        savedProduct = await productApi.create(productData);
+        const savedProduct = await productApi.create(productData);
+        if (formData.barcode.trim()) {
+          try {
+            await BarcodeApi.create({
+              barcode: formData.barcode.trim(),
+              productId: savedProduct?.id
+            });
+          } catch (err: any) {
+            console.error("Lỗi khi lưu barcode", err);
+            toast.error('Lưu mã vạch thất bại: ' + (err.response?.data?.message || 'Mã vạch đã tồn tại'));
+          }
+        }
         // if (formData.availableStock > 0 && savedProduct?.id) {
         //   try {
         //     await InventoryApi.create({
@@ -287,7 +308,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       handleClose();
     } catch (error: any) {
       console.error('Error saving product:', error);
-      
+
       // Rollback uploaded images on error
       if (!isEditing) {
         if (uploadedThumbnail && thumbnailFile) {
@@ -297,7 +318,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
             console.error('Error deleting thumbnail on rollback:', err);
           }
         }
-        
+
         for (const url of uploadedMediaUrls.filter(u => !existingMediaUrls.includes(u))) {
           try {
             await imageUploadService.deleteImage(url);
@@ -318,6 +339,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     setFormData({
       name: '',
       sku: '',
+      barcode: '',
       listedPrice: 0,
       price: 0,
       categoryId: '',
@@ -392,6 +414,21 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 disabled={isLoading}
               />
               {errors.sku && <p className="text-red-500 text-sm mt-1">{errors.sku}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mã vạch (Barcode)
+              </label>
+              <input
+                type="text"
+                value={formData.barcode}
+                onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                placeholder="Quét hoặc nhập mã vạch..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={isLoading || isEditing}
+                title={isEditing ? "Hiện chưa hỗ trợ sửa mã vạch trên UI chờ cập nhật Backend" : ""}
+              />
             </div>
           </div>
 

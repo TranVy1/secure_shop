@@ -1,0 +1,243 @@
+﻿diff --git a/frontend/src/pages/Admin.tsx b/frontend/src/pages/Admin.tsx
+index 893b1d2..c1dd345 100644
+--- a/frontend/src/pages/Admin.tsx
++++ b/frontend/src/pages/Admin.tsx
+@@ -1,20 +1,22 @@
+ import React, { useEffect, useState } from 'react';
+ import Header from '../components/Header';
+ import Footer from '../components/Footer';
+-import { 
+-  LayoutDashboard, 
+-  Package, 
+-  FolderTree, 
+-  Tag, 
+-  ShoppingCart, 
+-  Percent, 
+-  Users, 
+-  FileText, 
+-  MessageSquare, 
++import {
++  LayoutDashboard,
++  Package,
++  FolderTree,
++  Tag,
++  ShoppingCart,
++  Percent,
++  Users,
++  FileText,
++  MessageSquare,
+   BarChart3,
+   Warehouse,
+-  Star
++  Star,
++  Store
+ } from 'lucide-react';
++import { useAppSelector } from '../hooks';
+ 
+ // Type for admin modules
+ interface AdminModule {
+@@ -34,10 +36,13 @@ type TabKey =
+   | 'articles'
+   | 'tickets'
+   | 'analytics'
+-  | 'reviews';
++  | 'reviews'
++  | 'pos';
+ 
+-const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
++// Move TABS inside or just define all here
++const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+   { key: 'dashboard', label: 'Tß╗òng quan', icon: <LayoutDashboard className="w-5 h-5" /> },
++  { key: 'pos', label: 'B├ín h├áng (POS)', icon: <Store className="w-5 h-5" /> },
+   { key: 'products', label: 'Sß║ún phß║⌐m', icon: <Package className="w-5 h-5" /> },
+   { key: 'categories', label: 'Danh mß╗Ñc', icon: <FolderTree className="w-5 h-5" /> },
+   { key: 'brands', label: 'Th╞░╞íng hiß╗çu', icon: <Tag className="w-5 h-5" /> },
+@@ -52,7 +57,13 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+ ];
+ 
+ const Admin: React.FC = () => {
+-  const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
++  const { user } = useAppSelector((state) => state.auth);
++
++  const visibleTabs = user?.role?.toLowerCase() === 'staff'
++    ? ALL_TABS.filter(t => t.key === 'pos' || t.key === 'orders')
++    : ALL_TABS;
++
++  const [activeTab, setActiveTab] = useState<TabKey>(user?.role?.toLowerCase() === 'staff' ? 'pos' : 'dashboard');
+   const [loading, setLoading] = useState(false);
+   const [LoadedComponent, setLoadedComponent] = useState<React.FC<any> | null>(null);
+   const [data, setData] = useState<any>(null);
+@@ -63,7 +74,7 @@ const Admin: React.FC = () => {
+   const handlePageChange = async (page: number, size: number) => {
+     setCurrentPage(page);
+     setPageSize(size);
+-    
++
+     if (currentLoadData) {
+       try {
+         setLoading(true);
+@@ -112,6 +123,15 @@ const Admin: React.FC = () => {
+             setData(d);
+             break;
+           }
++          case 'pos': {
++            const mod = await import('./admin/POS') as AdminModule;
++            if (!mounted) return;
++            setLoadedComponent(() => mod.default);
++            setCurrentLoadData(() => mod.loadData || (() => Promise.resolve(null)));
++            // POS component usually manages its own data/state, no initial load needed
++            setData(null);
++            break;
++          }
+           case 'categories': {
+             const mod = await import('./admin/Categories') as AdminModule;
+             if (!mounted) return;
+@@ -224,84 +244,85 @@ const Admin: React.FC = () => {
+     return () => {
+       mounted = false;
+     };
+-  }, [activeTab]);
++  }, [activeTab, currentPage, pageSize]);
+ 
+   return (
+     <div className="min-h-screen bg-gray-50">
+       <Header />
+ 
+-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+-        <div className="mb-8">
+-          <div className="bg-gradient-to-r from-purple-600 to-cyan-500 rounded-2xl shadow-lg p-8 text-white">
+-            <h1 className="text-3xl sm:text-4xl font-bold mb-2">Quß║ún Trß╗ï Hß╗ç Thß╗æng</h1>
+-            <p className="text-purple-100 text-lg">
+-              Quß║ún l├╜ to├án bß╗Ö nß╗Öi dung v├á dß╗» liß╗çu cß╗ºa website
+-            </p>
++      <div className="w-full bg-gray-50">
++        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
++          <div className="mb-8">
++            <div className="bg-gradient-to-r from-purple-600 to-cyan-500 rounded-2xl shadow-lg p-8 text-white">
++              <h1 className="text-3xl sm:text-4xl font-bold mb-2">Quß║ún Trß╗ï Hß╗ç Thß╗æng</h1>
++              <p className="text-purple-100 text-lg">
++                Quß║ún l├╜ to├án bß╗Ö nß╗Öi dung v├á dß╗» liß╗çu cß╗ºa website
++              </p>
++            </div>
+           </div>
+-        </div>
+ 
+-        {/* Main Content */}
+-        <div className="flex flex-col lg:flex-row gap-6">
+-          {/* Sidebar Navigation */}
+-          <aside className="w-full lg:w-64 flex-shrink-0">
+-            <div className="bg-white rounded-xl shadow-sm p-4 sticky top-24">
+-              <nav className="space-y-1">
+-                {TABS.map((tab) => (
+-                  <button
+-                    key={tab.key}
+-                    onClick={() => setActiveTab(tab.key)}
+-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
+-                      activeTab === tab.key
++          {/* Main Content */}
++          <div className="flex flex-col lg:flex-row gap-6">
++            {/* Sidebar Navigation */}
++            <aside className="w-full lg:w-64 flex-shrink-0">
++              <div className="bg-white rounded-xl shadow-sm p-4 sticky top-24">
++                <nav className="space-y-1">
++                  {visibleTabs.map((tab) => (
++                    <button
++                      key={tab.key}
++                      onClick={() => setActiveTab(tab.key)}
++                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${activeTab === tab.key
+                         ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-md transform scale-[1.02]'
+                         : 'text-gray-700 hover:bg-gray-50 hover:text-purple-600'
+-                    }`}
+-                  >
+-                    <span className={activeTab === tab.key ? 'text-white' : 'text-gray-500'}>
+-                      {tab.icon}
+-                    </span>
+-                    <span className="font-medium">{tab.label}</span>
+-                  </button>
+-                ))}
+-              </nav>
+-            </div>
+-          </aside>
++                        }`}
++                    >
++                      <span className={activeTab === tab.key ? 'text-white' : 'text-gray-500'}>
++                        {tab.icon}
++                      </span>
++                      <span className="font-medium">{tab.label}</span>
++                    </button>
++                  ))}
++                </nav>
++              </div>
++            </aside>
+ 
+-          {/* Content Area */}
+-          <section className="flex-1 min-h-[500px]">
+-            <div className="bg-white rounded-xl shadow-sm p-6">
+-              {loading && (
+-                <div className="flex flex-col items-center justify-center py-16">
+-                  <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+-                  <p className="text-gray-600 font-medium">─Éang tß║úi dß╗» liß╗çu...</p>
+-                </div>
+-              )}
++            {/* Content Area */}
++            <section className="flex-1 min-h-[500px]">
++              <div className="bg-white rounded-xl shadow-sm p-6">
++                {loading && (
++                  <div className="flex flex-col items-center justify-center py-16">
++                    <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
++                    <p className="text-gray-600 font-medium">─Éang tß║úi dß╗» liß╗çu...</p>
++                  </div>
++                )}
+ 
+-              {!loading && LoadedComponent && (
+-                <div className="animate-fadeIn">
+-                  <LoadedComponent 
+-                    data={data} 
+-                    onReload={reloadCurrentTab}
+-                    onPageChange={activeTab === 'orders' ? handlePageChange : undefined}
+-                  />
+-                </div>
+-              )}
++                {!loading && LoadedComponent && (
++                  <div className="animate-fadeIn">
++                    <LoadedComponent
++                      data={data}
++                      onReload={reloadCurrentTab}
++                      onPageChange={activeTab === 'orders' ? handlePageChange : undefined}
++                    />
++                  </div>
++                )}
+ 
+-              {!loading && !LoadedComponent && (
+-                <div className="text-center py-16">
+-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+-                    <LayoutDashboard className="w-10 h-10 text-purple-600" />
++                {!loading && !LoadedComponent && (
++                  <div className="text-center py-16">
++                    <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
++                      <LayoutDashboard className="w-10 h-10 text-purple-600" />
++                    </div>
++                    <p className="text-gray-600 text-lg">Chß╗ìn mß╗Öt mß╗Ñc tß╗½ menu ─æß╗â bß║»t ─æß║ºu</p>
+                   </div>
+-                  <p className="text-gray-600 text-lg">Chß╗ìn mß╗Öt mß╗Ñc tß╗½ menu ─æß╗â bß║»t ─æß║ºu</p>
+-                </div>
+-              )}
+-            </div>
+-          </section>
+-        </div>
+-      </main>
++                )}
++              </div>
++            </section>
++          </div>
++        </main>
++      </div>
+ 
+       <Footer />
+     </div>
+   );
+ };
+ 
+-export default Admin;
+\ No newline at end of file
++export default Admin;

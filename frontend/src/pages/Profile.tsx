@@ -120,7 +120,7 @@ const Profile: React.FC = () => {
     if (activeTab === 'reviews' && user?.id) {
       fetchMyReviews();
     }
-  }, [activeTab, user]);
+  }, [activeTab, user]); // Note: fetchMyReviews depends on user!.id, so user is ok here
 
   const fetchMyReviews = async () => {
     try {
@@ -165,9 +165,7 @@ const Profile: React.FC = () => {
     try {
       const oldAvatarUrl = formData.avatarUrl;
 
-      const result = await imageUploadService.uploadImage(file, {
-        folder: 'users'
-      });
+      const result = await imageUploadService.uploadImage(file);
 
       const updateData = {
         id: formData.id,
@@ -327,7 +325,7 @@ const Profile: React.FC = () => {
     try {
       const data = await AddressApi.getAll();
       setAddresses(data);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi tải địa chỉ!');
     } finally {
       setLoadingAddresses(false);
@@ -340,7 +338,7 @@ const Profile: React.FC = () => {
     try {
       const results = getProvinces();
       setProvinces(results);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi tải danh sách tỉnh thành!');
     } finally {
       setLoadingProvinces(false);
@@ -356,7 +354,7 @@ const Profile: React.FC = () => {
     try {
       const results = getDistricts(provinceId);
       setDistricts(results);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi tải danh sách quận huyện!');
     } finally {
       setLoadingDistricts(false);
@@ -370,7 +368,7 @@ const Profile: React.FC = () => {
     try {
       const results = getWards(districtId);
       setWards(results);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi tải danh sách phường xã!');
     } finally {
       setLoadingWards(false);
@@ -387,7 +385,7 @@ const Profile: React.FC = () => {
     try {
       const data = await SupportTicketApi.getMyTickets({ size: 20 });
       setTickets(data.content);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi tải yêu cầu hỗ trợ!');
     } finally {
       setLoadingTickets(false);
@@ -470,7 +468,7 @@ const Profile: React.FC = () => {
       setEditingAddress(null);
       resetAddressForm();
       fetchAddresses();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi lưu địa chỉ!');
     }
   };
@@ -514,7 +512,7 @@ const Profile: React.FC = () => {
       await AddressApi.setDefault(id.toString());
       toast.success('Đặt địa chỉ mặc định thành công!');
       fetchAddresses();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi đặt địa chỉ mặc định!');
     }
   }
@@ -525,7 +523,7 @@ const Profile: React.FC = () => {
       await AddressApi.delete(id.toString());
       toast.success('Xóa địa chỉ thành công!');
       fetchAddresses();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xóa địa chỉ!');
     }
 
@@ -1149,64 +1147,66 @@ const Profile: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-white">
       <Header />
 
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 flex flex-col lg:flex-row gap-4 sm:gap-8 w-full">
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden mb-4">
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center justify-between"
-          >
-            <span>Menu tài khoản</span>
-            <svg
-              className={`w-5 h-5 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      <div className="w-full bg-gray-50">
+        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 flex flex-col lg:flex-row gap-4 sm:gap-8 w-full">
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden mb-4">
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center justify-between"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+              <span>Menu tài khoản</span>
+              <svg
+                className={`w-5 h-5 transition-transform ${showMobileMenu ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
 
-        {/* Sidebar - Desktop & Mobile */}
-        <aside className={`
+          {/* Sidebar - Desktop & Mobile */}
+          <aside className={`
           ${showMobileMenu ? 'block' : 'hidden'} 
           lg:block 
           w-full lg:w-64 
           lg:border-r lg:pr-4 
           mb-4 lg:mb-0
         `}>
-          <h3 className="text-lg font-bold text-zinc-700 mb-4 hidden lg:block">Tài khoản</h3>
-          <ul className="space-y-2">
-            {menu.map(m => (
-              <li key={m.key}>
-                <button
-                  onClick={() => handleMenuItemClick(m.key)}
-                  className={`
+            <h3 className="text-lg font-bold text-zinc-700 mb-4 hidden lg:block">Tài khoản</h3>
+            <ul className="space-y-2">
+              {menu.map(m => (
+                <li key={m.key}>
+                  <button
+                    onClick={() => handleMenuItemClick(m.key)}
+                    className={`
                     w-full text-left px-3 py-2 rounded hover:bg-purple-100 text-sm sm:text-base
                     ${activeTab === m.key ? 'bg-purple-200 font-semibold' : 'text-gray-700'}
                   `}
+                  >
+                    {m.label}
+                  </button>
+                </li>
+              ))}
+              <li>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 rounded text-red-600 hover:bg-red-100 text-sm sm:text-base"
                 >
-                  {m.label}
+                  Đăng xuất
                 </button>
               </li>
-            ))}
-            <li>
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-3 py-2 rounded text-red-600 hover:bg-red-100 text-sm sm:text-base"
-              >
-                Đăng xuất
-              </button>
-            </li>
-          </ul>
-        </aside>
+            </ul>
+          </aside>
 
-        {/* Content Section */}
-        <section className="flex-1 min-w-0 bg-white rounded-xl shadow p-4 sm:p-6 border">
-          {renderContent()}
-        </section>
-      </main>
+          {/* Content Section */}
+          <section className="flex-1 min-w-0 bg-white rounded-xl shadow p-4 sm:p-6 border">
+            {renderContent()}
+          </section>
+        </main>
+      </div>
 
       <Footer />
     </div>

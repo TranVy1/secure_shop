@@ -15,9 +15,10 @@ export default function App() {
   }, [dispatch]);
 
   return (
-    <Theme appearance="inherit" radius="large" scaling="100%">
-      <RouterProvider 
-        router={router} 
+    <Theme appearance="inherit" radius="large" scaling="100%"
+      style={{ width: '100%', height: '100%', minHeight: '100vh' }}>
+      <RouterProvider
+        router={router}
         future={{
           v7_startTransition: true,
         }}

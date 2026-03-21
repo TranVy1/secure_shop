@@ -18,10 +18,10 @@ public abstract class BaseEntity {
     private UUID id;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false, updatable = false, columnDefinition = "datetimeoffset(6)")
     private Instant createdAt;
 
     @UpdateTimestamp
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "datetimeoffset(6)")
     private Instant updatedAt;
 }

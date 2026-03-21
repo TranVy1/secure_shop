@@ -16,6 +16,10 @@ import java.util.UUID;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
+    /** Lấy tất cả items của một order — dùng cho InvoiceService */
+    @Query("SELECT oi FROM OrderItem oi JOIN FETCH oi.product WHERE oi.order.id = :orderId")
+    List<OrderItem> findByOrderId(@Param("orderId") UUID orderId);
+
     /**
      * Find all order items for a user and product with a specific order status
      * Used to validate if user can review a product (must have completed purchase)

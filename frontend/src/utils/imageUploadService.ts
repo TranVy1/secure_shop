@@ -5,12 +5,8 @@ export interface UploadResult {
   path: string;
 }
 
-interface UploadOptions {
-  folder?: string;
-}
-
 class ImageUploadService {
-  async uploadImage(file: File, _options: UploadOptions = {}): Promise<UploadResult> {
+  async uploadImage(file: File): Promise<UploadResult> {
     try {
       // Validate file
       this.validateFile(file);
@@ -36,8 +32,8 @@ class ImageUploadService {
     }
   }
 
-  async uploadMultipleImages(files: File[], options: UploadOptions = {}): Promise<UploadResult[]> {
-    const uploadPromises = files.map((file) => this.uploadImage(file, options));
+  async uploadMultipleImages(files: File[]): Promise<UploadResult[]> {
+    const uploadPromises = files.map((file) => this.uploadImage(file));
     return Promise.all(uploadPromises);
   }
 

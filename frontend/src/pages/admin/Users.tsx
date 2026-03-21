@@ -5,13 +5,13 @@ import { userApi } from '../../utils/api';
 import type { UserSummary } from '../../types/types';
 import ConfirmDialog from '../../components/ConfirmDialog';
 
-type Props = { 
+type Props = {
   data?: UserSummary[];
   onReload?: () => void;
 };
 
 const Users: React.FC<Props> = ({ data, onReload }) => {
-  const users = data || [];
+  const users = useMemo(() => data || [], [data]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'Admin' | 'User'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
@@ -31,7 +31,7 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
     // Tìm kiếm theo tên, email, phone
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((user: UserSummary) => 
+      filtered = filtered.filter((user: UserSummary) =>
         user.name.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower) ||
         (user.phone && user.phone.toLowerCase().includes(searchLower))
@@ -43,9 +43,9 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
       filtered = filtered.filter((user: UserSummary) => {
         const userRole = user.role?.toUpperCase() || '';
         const filterRole = roleFilter.toUpperCase();
-        return userRole === filterRole || 
-               userRole === `ROLE_${filterRole}` || 
-               userRole.includes(filterRole);
+        return userRole === filterRole ||
+          userRole === `ROLE_${filterRole}` ||
+          userRole.includes(filterRole);
       });
     }
 
@@ -95,7 +95,7 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
 
   const handleViewUserDetail = async (user: UserSummary) => {
     setUserDetailModal({ open: true, user, loading: true });
-    
+
     try {
       setUserDetailModal({ open: true, user, loading: false });
     } catch (error) {
@@ -164,14 +164,14 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
               filteredUsers.map((user: any) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
-                    <div 
+                    <div
                       className="flex items-center gap-3 cursor-pointer hover:bg-gray-100 rounded-lg p-2 -m-2 transition-colors"
                       onClick={() => handleViewUserDetail(user)}
                     >
                       <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center overflow-hidden">
                         {user.avatarUrl ? (
-                          <img 
-                            src={user.avatarUrl} 
+                          <img
+                            src={user.avatarUrl}
                             alt={user.name}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -188,34 +188,31 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
                   <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                      user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {user.role === 'Admin' ? <Shield className="w-3 h-3" /> : <UserIcon className="w-3 h-3" />}
                       {user.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                      user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
                       {user.enabled ? 'Hoạt động' : 'Khóa'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button 
+                      <button
                         onClick={() => handleToggleUserStatus(user)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          user.enabled 
-                            ? 'text-red-600 hover:bg-red-50' 
+                        className={`p-2 rounded-lg transition-colors ${user.enabled
+                            ? 'text-red-600 hover:bg-red-50'
                             : 'text-green-600 hover:bg-green-50'
-                        }`}
+                          }`}
                         title={user.enabled ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
                       >
                         {user.enabled ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDeleteUser(user)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Xóa tài khoản"
@@ -272,8 +269,8 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-full flex items-center justify-center overflow-hidden">
                       {userDetailModal.user.avatarUrl ? (
-                        <img 
-                          src={userDetailModal.user.avatarUrl} 
+                        <img
+                          src={userDetailModal.user.avatarUrl}
                           alt={userDetailModal.user.name}
                           className="w-full h-full object-cover"
                         />
@@ -292,32 +289,30 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
                       <span className="text-sm font-medium text-gray-600">ID:</span>
                       <span className="text-sm text-gray-900 font-mono">{userDetailModal.user.id}</span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-600">Email:</span>
                       <span className="text-sm text-gray-900">{userDetailModal.user.email}</span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-600">Số điện thoại:</span>
                       <span className="text-sm text-gray-900">{userDetailModal.user.phone || 'Chưa cập nhật'}</span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-600">Vai trò:</span>
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                        userDetailModal.user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${userDetailModal.user.role === 'Admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
                         {userDetailModal.user.role === 'Admin' ? <Shield className="w-3 h-3" /> : <UserIcon className="w-3 h-3" />}
                         {userDetailModal.user.role}
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-2">
                       <span className="text-sm font-medium text-gray-600">Trạng thái:</span>
-                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                        userDetailModal.user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${userDetailModal.user.enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {userDetailModal.user.enabled ? 'Hoạt động' : 'Khóa'}
                       </span>
                     </div>
@@ -343,6 +338,7 @@ const Users: React.FC<Props> = ({ data, onReload }) => {
 
 export default Users;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const result = await userApi.getAllUsers();

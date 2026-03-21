@@ -1,0 +1,5 @@
+src/components/admin-modal/CategoryModal.tsx(86,11): error TS2353: Object literal may only specify known properties, and 'bucket' does not exist in type 'UploadOptions'.
+src/components/admin-modal/ProductModal.tsx(185,11): error TS2353: Object literal may only specify known properties, and 'bucket' does not exist in type 'UploadOptions'.
+src/components/admin-modal/ProductModal.tsx(196,15): error TS2353: Object literal may only specify known properties, and 'bucket' does not exist in type 'UploadOptions'.
+src/components/admin-modal/ProductModal.tsx(230,11): error TS6133: 'savedProduct' is declared but its value is never read.
+src/components/Header.tsx(42,9): error TS6133: 'toggleUserMenu' is declared but its value is never read.

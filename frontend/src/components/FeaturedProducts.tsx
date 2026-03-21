@@ -21,7 +21,7 @@ const FeaturedProducts: React.FC = () => {
 
         const data = await productApi.getAll({
           page: 0,
-          size: 4,
+          size: 6,
           sort: 'price,desc',
           inStock: true
         });
@@ -60,14 +60,14 @@ const FeaturedProducts: React.FC = () => {
   if (loading) {
     return (
       <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">
               Sản Phẩm Nổi Bật
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+            {[...Array(6)].map((_, index) => (
               <div
                 key={index}
                 className="bg-white rounded-lg shadow-md overflow-hidden"
@@ -89,7 +89,7 @@ const FeaturedProducts: React.FC = () => {
   if (error) {
     return (
       <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">
               Sản Phẩm Nổi Bật
@@ -112,7 +112,7 @@ const FeaturedProducts: React.FC = () => {
   if (products.length === 0) {
     return (
       <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-zinc-800 mb-4">
               Sản Phẩm Nổi Bật
@@ -128,7 +128,7 @@ const FeaturedProducts: React.FC = () => {
 
   return (
     <section className="py-16 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -149,7 +149,7 @@ const FeaturedProducts: React.FC = () => {
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6"
         >
           {products.map((product, index) => (
             <motion.div

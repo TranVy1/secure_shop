@@ -103,9 +103,9 @@ public class VNPayController {
      */
     private String getClientIP(HttpServletRequest request) {
         String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null || xfHeader.isEmpty()) {
-            return request.getRemoteAddr();
+        if (xfHeader != null && xfHeader.matches("[\\d.,: ]+")) {
+            return xfHeader.split(",")[0].trim();
         }
-        return xfHeader.split(",")[0].trim();
+        return request.getRemoteAddr();
     }
 }

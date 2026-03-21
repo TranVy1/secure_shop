@@ -22,7 +22,7 @@ const Home: React.FC = () => {
 
         {/* Why Choose Us Section */}
         <section className="py-12 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-zinc-800 mb-4">Tại Sao Chọn Security Shop?</h2>
               <p className="text-gray-600 max-w-2xl mx-auto">

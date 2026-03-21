@@ -47,7 +47,7 @@ public class WarrantyRequest {
     private WarrantyStatus status = WarrantyStatus.SUBMITTED;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "datetimeoffset(6) DEFAULT SYSDATETIMEOFFSET()")
     private Instant requestedAt = Instant.now();
 
     private Instant resolvedAt;

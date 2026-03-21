@@ -107,7 +107,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest req) {
         log.error("Unhandled exception at {}: {}", req.getRequestURI(), ex.getMessage(), ex);
         return buildErrorResponse("INTERNAL_SERVER_ERROR",
-                ex.getMessage(),
+                "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
                 req,
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }

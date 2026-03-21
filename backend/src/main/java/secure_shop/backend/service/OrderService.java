@@ -34,4 +34,10 @@ public interface OrderService {
     OrderDTO changeOrderStatus(UUID id, String status);
 
     Integer getTotalOrdersCount();
+
+    /**
+     * POS: Tạo đơn hàng và hoàn tất ngay trong một transaction duy nhất.
+     * createOrder → confirmOrder → DELIVERED — atomic, không để state không nhất quán.
+     */
+    OrderDTO createAndCompleteOrder(OrderCreateRequest request, UUID staffId);
 }

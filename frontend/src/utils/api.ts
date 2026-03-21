@@ -550,3 +550,70 @@ export const PaymentApi = {
     return response.data;
   },
 };
+
+// POS API
+export const posApi = {
+  scanBarcode: async (barcode: string) => {
+    const response = await api.get(`/barcodes/scan/${barcode}`);
+    return response.data;
+  },
+  checkout: async (data: {
+    items: { productId: string; quantity: number }[];
+    paymentMethod?: string;
+    cashReceived?: number;
+  }) => {
+    const response = await api.post("/pos/checkout", data);
+    return response.data;
+  },
+};
+
+// Barcode API
+export const BarcodeApi = {
+  create: async (data: { barcode: string; productId: string }) => {
+    const response = await api.post("/barcodes", data);
+    return response.data;
+  },
+  getByProduct: async (productId: string) => {
+    const response = await api.get(`/barcodes/product/${productId}`);
+    return response.data;
+  },
+  autoGenerate: async (productId: string, sku: string) => {
+    const response = await api.post(`/barcodes/auto-generate/${productId}`, null, {
+      params: { sku }
+    });
+    return response.data;
+  },
+  delete: async (id: number) => {
+    await api.delete(`/barcodes/${id}`);
+  },
+};
+
+// Invoice API
+export const invoiceApi = {
+  getAll: async (params?: { page?: number; size?: number }) => {
+    const response = await api.get("/invoices", { params });
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get(`/invoices/${id}`);
+    return response.data;
+  },
+  /** Returns a URL to download the PDF directly */
+  getPdfUrl: (id: string) => `/api/invoices/${id}/pdf`,
+  downloadPdf: async (id: string, invoiceCode: string) => {
+    const response = await api.get(`/invoices/${id}/pdf`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${invoiceCode}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+  cancel: async (id: string) => {
+    const response = await api.post(`/invoices/${id}/cancel`);
+    return response.data;
+  },
+};
+

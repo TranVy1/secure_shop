@@ -3,7 +3,7 @@ import Admin from "../pages/Admin";
 
 export const adminRoutes = {
   path: "/admin",
-  element: <AuthGuard roles={["admin"]} />,
+  element: <AuthGuard roles={["admin", "staff"]} />,
   children: [
     {
       index: true,

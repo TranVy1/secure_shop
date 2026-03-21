@@ -6,13 +6,13 @@ import type { Article } from '../../types/types';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import ArticleModal from '../../components/admin-modal/ArticleModal';
 
-type Props = { 
+type Props = {
   data?: Article[];
   onReload?: () => void;
 };
 
 const Articles: React.FC<Props> = ({ data, onReload }) => {
-  const articles = data || [];
+  const articles = useMemo(() => data || [], [data]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -36,7 +36,7 @@ const Articles: React.FC<Props> = ({ data, onReload }) => {
     // Tìm kiếm theo tiêu đề, nội dung, tác giả
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((article: Article) => 
+      filtered = filtered.filter((article: Article) =>
         article.title.toLowerCase().includes(searchLower) ||
         article.content.toLowerCase().includes(searchLower) ||
         (article.adminName && article.adminName.toLowerCase().includes(searchLower))
@@ -99,7 +99,7 @@ const Articles: React.FC<Props> = ({ data, onReload }) => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-zinc-800">Quản lý bài viết</h2>
-        <button 
+        <button
           onClick={handleCreateArticle}
           className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transition-shadow"
         >
@@ -155,19 +155,19 @@ const Articles: React.FC<Props> = ({ data, onReload }) => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     onClick={() => handleViewArticle(article)}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleEditArticle(article)}
                     className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDeleteArticle(article)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   >
@@ -242,6 +242,7 @@ const Articles: React.FC<Props> = ({ data, onReload }) => {
 
 export default Articles;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export async function loadData() {
   try {
     const result = await ArticleApi.getAll({ size: 100 }); // Get more articles for admin view

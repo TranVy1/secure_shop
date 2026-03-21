@@ -28,10 +28,10 @@ const HeroSection: React.FC = () => {
   ];
 
   return (
-    <section className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-zinc-800 text-white overflow-hidden">
+    <section className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-zinc-800 text-white overflow-hidden w-full max-w-full">
       <div className="absolute inset-0 bg-black opacity-20"></div>
-      
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Content */}
           <motion.div
@@ -46,7 +46,7 @@ const HeroSection: React.FC = () => {
                 <span className="block text-cyan-500">Ngôi Nhà Của Bạn</span>
               </h1>
               <p className="text-xl text-gray-200 leading-relaxed">
-                Khám phá bộ sưu tập thiết bị an ninh hiện đại với công nghệ tiên tiến, 
+                Khám phá bộ sưu tập thiết bị an ninh hiện đại với công nghệ tiên tiến,
                 đảm bảo an toàn tuyệt đối cho gia đình và doanh nghiệp.
               </p>
             </div>
@@ -88,10 +88,10 @@ const HeroSection: React.FC = () => {
             <img
               src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
               alt="Security System"
-              className="rounded-lg shadow-2xl"
+              className="rounded-lg shadow-2xl w-full max-w-full h-auto object-cover"
               loading="eager"
             />
-            <div className="absolute -bottom-6 -left-6 bg-white text-zinc-800 p-6 rounded-lg shadow-xl">
+            <div className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 bg-white text-zinc-800 p-4 sm:p-6 rounded-lg shadow-xl max-w-[calc(100%-1rem)]">
               <div className="flex items-center space-x-3">
                 <Shield className="h-8 w-8 text-purple-600" />
                 <div>
