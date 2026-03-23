@@ -1,0 +1,279 @@
+{
+  "title": "Spring Boot Advanced Monitoring",
+  "tags": ["spring-boot", "micrometer", "actuator"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "5s",
+  "panels": [
+    {
+      "title": "Throughput (API Requests/sec)",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count[1m]))",
+          "legendFormat": "req/s",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "title": "CPU Usage (Process)",
+      "type": "gauge",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "process_cpu_usage",
+          "legendFormat": "Process",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.7 },
+              { "color": "red", "value": 0.9 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "title": "CPU Usage (System)",
+      "type": "gauge",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 7 },
+      "targets": [
+        {
+          "expr": "system_cpu_usage",
+          "legendFormat": "System",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.7 },
+              { "color": "red", "value": 0.9 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "title": "Top Endpoints (Traffic)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 7, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "expr": "sum by (uri) (rate(http_server_requests_seconds_count[1m]))",
+          "legendFormat": "{{uri}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "title": "HTTP Status Breakdown",
+      "type": "piechart",
+      "gridPos": { "x": 12, "y": 7, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "expr": "sum by (status) (increase(http_server_requests_seconds_count[1h]))",
+          "legendFormat": "HTTP {{status}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "displayLabels": [ "name", "percent" ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [ "lastNotNull" ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "JVM Memory Usage",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 17, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+          "legendFormat": "Used Heap",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{area=\"heap\"}",
+          "legendFormat": "Max Heap",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "bytes"
+        }
+      }
+    },
+    {
+      "title": "HikariCP Pool Usage",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 17, "w": 12, "h": 10 },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_max",
+          "legendFormat": "Max",
+          "refId": "C"
+        },
+        {
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "Active",
+          "refId": "A"
+        },
+        {
+          "expr": "hikaricp_connections_idle",
+          "legendFormat": "Idle",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "title": "Tổng Order Đã Đặt Thành Công",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 27 },
+      "targets": [{ "expr": "sum(orders_placed_total_total)", "refId": "A" }],
+      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto" }
+    }
+  ]
+}

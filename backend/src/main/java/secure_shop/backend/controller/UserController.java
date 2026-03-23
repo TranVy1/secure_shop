@@ -40,6 +40,16 @@ public class UserController {
         return ResponseEntity.ok(new UserMapper().toDTO(service.updateUser(userDetails.getUser().getId(), req)));
     }
 
+    @PutMapping("/me/avatar")
+    public ResponseEntity<UserProfileDTO> updateAvatar(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, String> body) {
+        String avatarUrl = body.get("avatarUrl");
+        User updateReq = new User();
+        updateReq.setAvatarUrl(avatarUrl);
+        return ResponseEntity.ok(new UserMapper().toDTO(service.updateUser(userDetails.getUser().getId(), updateReq)));
+    }
+
     @DeleteMapping("/me")
     public ResponseEntity<?> deleteMyAccount(
             @AuthenticationPrincipal CustomUserDetails userDetails) {

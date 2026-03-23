@@ -54,6 +54,8 @@ npm run dev
 Mặc định chạy tại `http://localhost:5173`.
 
 ---
+docker compose up -d
+
 
 ## 🔐 Environment & Secrets
 

@@ -1,11 +1,101 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import ChatPanel from "./ChatPanel";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { toast } from "react-toastify";
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [unread, setUnread] = useState(0);
   const wasOpenRef = useRef(false);
+  const openRef = useRef(open);
+  const stompClientRef = useRef<Client | null>(null);
+  const [stompConnected, setStompConnected] = useState(false);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  // Callback khi nhận tin nhắn mới từ /user/queue/chat (dùng cho unread badge)
+  const handleIncomingChatMessage = useCallback(() => {
+    if (!openRef.current) {
+      setUnread((prev) => Math.min(prev + 1, 99));
+    }
+  }, []);
+
+  // STOMP WebSocket Connection (dùng chung cho notification + live chat)
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8090/api";
+    const wsUrl = API_URL.replace("/api", "") + "/ws";
+
+    let cancelled = false;
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS(wsUrl),
+      connectHeaders: {
+        Authorization: `Bearer ${token}`
+      },
+      debug: (str) => {
+        if (str.includes('CONNECT') || str.includes('CONNECTED') || str.includes('ERROR') || str.includes('DISCONNECT')) {
+          console.log('STOMP: ' + str);
+        }
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    client.onConnect = () => {
+      if (cancelled) return;
+      console.log("Connected to STOMP WebSocket Server");
+      setStompConnected(true);
+
+      // Subscribe thông báo hệ thống
+      client.subscribe("/user/queue/notifications", (message) => {
+        if (message.body) {
+          const notification = JSON.parse(message.body);
+          toast.info(`🔔 ${notification.title}`, { position: "top-right", autoClose: 5000 });
+        }
+      });
+
+      // Subscribe tin nhắn chat ở cấp Widget để đếm unread
+      client.subscribe("/user/queue/chat", () => {
+        handleIncomingChatMessage();
+      });
+    };
+
+    client.onStompError = (frame) => {
+      console.error('STOMP error:', frame.headers['message'], frame.body);
+    };
+
+    client.onWebSocketError = (event) => {
+      console.error('WebSocket error:', event);
+    };
+
+    client.onWebSocketClose = () => {
+      if (!cancelled) setStompConnected(false);
+    };
+
+    client.onDisconnect = () => {
+      if (!cancelled) setStompConnected(false);
+    };
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      cancelled = true;
+      setStompConnected(false);
+      stompClientRef.current = null;
+      if (client.active) {
+        client.deactivate();
+      }
+    };
+  }, [handleIncomingChatMessage]);
 
   // Keyboard shortcut: Escape to close
   useEffect(() => {
@@ -16,7 +106,7 @@ export default function ChatWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Track unread count when minimized
+  // Clear unread when opened
   useEffect(() => {
     if (open) {
       setUnread(0);
@@ -43,7 +133,6 @@ export default function ChatWidget() {
   return (
     <>
       <style>{`
-        /* ── Widget scoped styles ── */
         .ss-widget-panel-enter {
           animation: ss-widget-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
@@ -143,7 +232,6 @@ export default function ChatWidget() {
           flex-shrink: 0;
         }
 
-        /* Panel wrapper */
         .ss-panel-wrapper {
           position: fixed;
           bottom: 92px;
@@ -151,7 +239,6 @@ export default function ChatWidget() {
           z-index: 9991;
         }
 
-        /* Mobile: fullscreen */
         @media (max-width: 640px) {
           .ss-fab { bottom: 16px; right: 16px; }
           .ss-panel-wrapper { display: none; }
@@ -172,20 +259,16 @@ export default function ChatWidget() {
         aria-label={open ? "Đóng chat" : "Mở chat hỗ trợ"}
         title="Chat hỗ trợ SecureShop"
       >
-        {/* Chat icon */}
         <span className={`ss-fab-icon ss-fab-icon--chat ${open ? "ss-hidden" : ""}`}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M4 5h16v9H7l-3 3V5z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
-        {/* Close icon */}
         <span className={`ss-fab-icon ss-fab-icon--close ${open ? "ss-visible" : ""}`}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6l12 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </span>
-
-        {/* Unread badge */}
         {!open && unread > 0 && (
           <span className="ss-badge">{unread > 9 ? "9+" : unread}</span>
         )}
@@ -206,14 +289,24 @@ export default function ChatWidget() {
       {/* ── Desktop Panel ── */}
       {open && (
         <div className="ss-panel-wrapper ss-widget-panel-enter">
-          <ChatPanel onClose={handleClose} onMinimize={handleMinimize} />
+          <ChatPanel
+            onClose={handleClose}
+            onMinimize={handleMinimize}
+            stompClient={stompClientRef.current}
+            stompConnected={stompConnected}
+          />
         </div>
       )}
 
       {/* ── Mobile Fullscreen Panel ── */}
       {open && (
         <div className="ss-panel-fullscreen-wrapper">
-          <ChatPanel onClose={handleClose} fullscreen />
+          <ChatPanel
+            onClose={handleClose}
+            fullscreen
+            stompClient={stompClientRef.current}
+            stompConnected={stompConnected}
+          />
         </div>
       )}
     </>

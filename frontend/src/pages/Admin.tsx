@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard, Package, FolderTree, Tag, ShoppingCart,
   Percent, Users, FileText, MessageSquare, BarChart3,
-  Warehouse, Star, Store, ChevronRight, LogOut, Bell
+  Warehouse, Star, Store, ChevronRight, LogOut, Bell, MessageCircle
 } from 'lucide-react';
 import { useAppSelector } from '../hooks';
 
@@ -14,7 +14,7 @@ interface AdminModule {
 type TabKey =
   | 'dashboard' | 'products' | 'categories' | 'brands'
   | 'orders' | 'inventories' | 'discount' | 'users'
-  | 'articles' | 'tickets' | 'analytics' | 'reviews' | 'pos';
+  | 'articles' | 'tickets' | 'analytics' | 'reviews' | 'pos' | 'livechat';
 
 const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode; group?: string }[] = [
   { key: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-4 h-4" />, group: 'main' },
@@ -28,6 +28,7 @@ const ALL_TABS: { key: TabKey; label: string; icon: React.ReactNode; group?: str
   { key: 'users', label: 'Người dùng', icon: <Users className="w-4 h-4" />, group: 'system' },
   { key: 'articles', label: 'Bài viết', icon: <FileText className="w-4 h-4" />, group: 'system' },
   { key: 'tickets', label: 'Hỗ trợ', icon: <MessageSquare className="w-4 h-4" />, group: 'system' },
+  { key: 'livechat', label: 'Chat trực tiếp', icon: <MessageCircle className="w-4 h-4" />, group: 'system' },
   { key: 'reviews', label: 'Đánh giá', icon: <Star className="w-4 h-4" />, group: 'system' },
   { key: 'analytics', label: 'Thống kê', icon: <BarChart3 className="w-4 h-4" />, group: 'system' },
 ];
@@ -40,7 +41,7 @@ const GROUPS = [
 ];
 
 // POS gets no padding — fully manages its own layout
-const POS_FULLSCREEN_TABS: TabKey[] = ['pos'];
+const POS_FULLSCREEN_TABS: TabKey[] = ['pos', 'livechat'];
 
 const Admin: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -103,6 +104,7 @@ const Admin: React.FC = () => {
           tickets: () => import('./admin/Tickets'),
           analytics: () => import('./admin/Analytics'),
           reviews: () => import('./admin/Reviews'),
+          livechat: () => import('./admin/AdminLiveChat'),
         };
         const mod = await mods[tab]();
         if (!mounted) return;

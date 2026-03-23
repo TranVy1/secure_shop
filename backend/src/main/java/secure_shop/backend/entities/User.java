@@ -65,6 +65,10 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private Role role = Role.USER;
+    
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer points = 0;
 
     private Instant deletedAt;
 

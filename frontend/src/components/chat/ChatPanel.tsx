@@ -1,20 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { chatApi } from "../../utils/api";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { liveChatApi } from "../../utils/api";
+import { Client } from "@stomp/stompjs";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type Suggestion = {
-  id: string;
-  name: string;
-  price?: string | number;
-  thumbnailUrl?: string;
-};
-
 type ChatMsg = {
-  role: "user" | "assistant";
+  id?: string;
+  role: "user" | "assistant" | "system";
   content: string;
-  suggestions?: Suggestion[];
-  sources?: string[];
+  senderType?: string;
   timestamp: Date;
 };
 
@@ -22,6 +16,8 @@ interface ChatPanelProps {
   onClose?: () => void;
   onMinimize?: () => void;
   fullscreen?: boolean;
+  stompClient: Client | null;
+  stompConnected: boolean;
 }
 
 // ─── Quick Actions ────────────────────────────────────────────────────────────
@@ -30,13 +26,19 @@ const QUICK_ACTIONS = [
   { label: "🔄 Đổi trả hàng", value: "Chính sách đổi trả như thế nào?" },
   { label: "📦 Cách đặt hàng", value: "Hướng dẫn cách đặt hàng" },
   { label: "🔥 Sản phẩm hot", value: "Sản phẩm bán chạy nhất hiện tại" },
-  { label: "💡 Tư vấn 15 triệu", value: "Tư vấn laptop tầm 15 triệu" },
+  { label: "👨‍💼 Gặp tư vấn viên", value: "Tôi muốn gặp tư vấn viên" },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatTime(date: Date) {
   return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+}
+
+function mapSenderType(senderType?: string): "user" | "assistant" | "system" {
+  if (senderType === "USER") return "user";
+  if (senderType === "SYSTEM") return "system";
+  return "assistant"; // BOT, ADMIN
 }
 
 // ─── Typing Indicator ────────────────────────────────────────────────────────
@@ -62,6 +64,25 @@ function TypingIndicator() {
 
 function MessageBubble({ msg }: { msg: ChatMsg }) {
   const isUser = msg.role === "user";
+  const isSystem = msg.role === "system";
+
+  if (isSystem) {
+    return (
+      <div className="ss-chat-msg-row" style={{ justifyContent: "center" }}>
+        <div style={{
+          padding: "4px 12px",
+          borderRadius: 999,
+          background: "#f1f5f9",
+          color: "#64748b",
+          fontSize: 11,
+          fontWeight: 500,
+          textAlign: "center",
+        }}>
+          {msg.content}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`ss-chat-msg-row ${isUser ? "ss-chat-msg-row--user" : "ss-chat-msg-row--bot"}`}>
@@ -74,56 +95,14 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
       )}
 
       <div className="ss-chat-msg-content">
+        {!isUser && msg.senderType === "ADMIN" && (
+          <span style={{ fontSize: 10, color: "#6366f1", fontWeight: 600, marginBottom: 2 }}>
+            👤 Nhân viên hỗ trợ
+          </span>
+        )}
         <div className={`ss-chat-bubble ${isUser ? "ss-chat-bubble--user" : "ss-chat-bubble--bot"}`}>
           <p className="ss-chat-text">{msg.content}</p>
-
-          {/* Product Suggestions */}
-          {!!msg.suggestions?.length && (
-            <div className="ss-suggestions">
-              {msg.suggestions.map((p) => (
-                <a key={p.id} href={`/products/${p.id}`} className="ss-suggestion-card">
-                  <div className="ss-suggestion-img">
-                    {p.thumbnailUrl ? (
-                      <img src={p.thumbnailUrl} alt={p.name} />
-                    ) : (
-                      <div className="ss-suggestion-img-placeholder">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="3" width="18" height="18" rx="2" stroke="#94a3b8" strokeWidth="1.5" />
-                          <circle cx="8.5" cy="8.5" r="1.5" fill="#94a3b8" />
-                          <path d="M21 15l-5-5L5 21" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <div className="ss-suggestion-info">
-                    <span className="ss-suggestion-name">{p.name}</span>
-                    {p.price && (
-                      <span className="ss-suggestion-price">
-                        {typeof p.price === "number"
-                          ? p.price.toLocaleString("vi-VN") + "₫"
-                          : p.price}
-                      </span>
-                    )}
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="ss-suggestion-arrow">
-                    <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-              ))}
-            </div>
-          )}
-
-          {/* Sources */}
-          {!!msg.sources?.length && (
-            <div className="ss-sources">
-              <span className="ss-sources-label">Nguồn:</span>
-              {msg.sources.map((s, i) => (
-                <span key={i} className="ss-source-item">• {s}</span>
-              ))}
-            </div>
-          )}
         </div>
-
         <span className="ss-chat-time">{formatTime(msg.timestamp)}</span>
       </div>
     </div>
@@ -132,53 +111,142 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
 
 // ─── Main Panel ──────────────────────────────────────────────────────────────
 
-export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      role: "assistant",
-      content: "Xin chào! 👋 Tôi là trợ lý SecureShop. Tôi có thể giúp bạn về chính sách, đặt hàng, tư vấn sản phẩm và nhiều hơn nữa!",
-      timestamp: new Date(),
-    },
-  ]);
+export default function ChatPanel({ onClose, onMinimize, fullscreen, stompClient, stompConnected }: ChatPanelProps) {
+  const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [initDone, setInitDone] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const processedIds = useRef<Set<string>>(new Set());
 
-  const canSend = useMemo(() => input.trim().length > 0 && !loading, [input, loading]);
+  const canSend = useMemo(() => input.trim().length > 0 && !loading && stompConnected && sessionId, [input, loading, stompConnected, sessionId]);
 
+  // Auto-scroll
   useEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  const send = async (text?: string) => {
-    const msg = (text ?? input).trim();
-    if (!msg) return;
-    setInput("");
-    setMessages((m) => [...m, { role: "user", content: msg, timestamp: new Date() }]);
-    setLoading(true);
-    try {
-      const res = await chatApi.ask(msg);
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          content: res.answer || "Mình đã ghi nhận câu hỏi nhé.",
-          suggestions: res.suggestions as Suggestion[] | undefined,
-          sources: (res as any).sources,
-          timestamp: new Date(),
-        },
-      ]);
-    } catch {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", content: "Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau.", timestamp: new Date() },
-      ]);
-    } finally {
-      setLoading(false);
-      inputRef.current?.focus();
+  // Initialize: Lấy session + load history
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setMessages([{
+        role: "assistant",
+        content: "Vui lòng đăng nhập để sử dụng chat hỗ trợ trực tuyến! 🔐",
+        timestamp: new Date(),
+      }]);
+      setInitDone(true);
+      return;
     }
+
+    let cancelled = false;
+    const init = async () => {
+      try {
+        const session = await liveChatApi.getMySession();
+        if (cancelled) return;
+        setSessionId(session.id);
+
+        const history = await liveChatApi.getSessionHistory(session.id);
+        if (cancelled) return;
+
+        const mapped: ChatMsg[] = history.map((m: any) => {
+          processedIds.current.add(m.id);
+          return {
+            id: m.id,
+            role: mapSenderType(m.senderType),
+            content: m.content,
+            senderType: m.senderType,
+            timestamp: new Date(m.createdAt),
+          };
+        });
+
+        setMessages(mapped.length > 0 ? mapped : [{
+          role: "assistant",
+          content: "Xin chào! 👋 Tôi là trợ lý SecureShop. Tôi có thể giúp bạn về chính sách, đặt hàng, tư vấn sản phẩm và nhiều hơn nữa!",
+          timestamp: new Date(),
+        }]);
+      } catch (err) {
+        console.error("Failed to init chat session:", err);
+        if (!cancelled) {
+          setMessages([{
+            role: "assistant",
+            content: "Không thể kết nối chat. Vui lòng thử lại sau.",
+            timestamp: new Date(),
+          }]);
+        }
+      } finally {
+        if (!cancelled) setInitDone(true);
+      }
+    };
+    init();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Subscribe STOMP cho tin nhắn real-time
+  const handleStompMessage = useCallback((msgBody: any) => {
+    // Tránh duplicate: nếu đã xử lý ID này rồi thì bỏ qua
+    if (msgBody.id && processedIds.current.has(msgBody.id)) return;
+    if (msgBody.id) processedIds.current.add(msgBody.id);
+
+    // Không hiển thị tin nhắn USER của chính mình (đã add khi send)
+    if (msgBody.senderType === "USER") return;
+
+    const newMsg: ChatMsg = {
+      id: msgBody.id,
+      role: mapSenderType(msgBody.senderType),
+      content: msgBody.content,
+      senderType: msgBody.senderType,
+      timestamp: new Date(msgBody.createdAt || Date.now()),
+    };
+    setMessages((prev) => [...prev, newMsg]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!stompClient || !stompConnected) return;
+
+    const sub = stompClient.subscribe("/user/queue/chat", (message) => {
+      try {
+        const body = JSON.parse(message.body);
+        handleStompMessage(body);
+      } catch (e) {
+        console.error("Failed to parse STOMP chat message:", e);
+      }
+    });
+
+    return () => {
+      try { sub.unsubscribe(); } catch { /* ignore */ }
+    };
+  }, [stompClient, stompConnected, handleStompMessage]);
+
+  // Send message
+  const send = (text?: string) => {
+    const msg = (text ?? input).trim();
+    if (!msg || !stompClient || !stompConnected || !sessionId) return;
+    
+    setInput("");
+    
+    // Optimistic: thêm tin nhắn ngay lập tức
+    setMessages((m) => [...m, {
+      role: "user",
+      content: msg,
+      senderType: "USER",
+      timestamp: new Date(),
+    }]);
+    
+    setLoading(true);
+
+    // Gửi qua STOMP
+    stompClient.publish({
+      destination: "/app/chat.user.send",
+      body: JSON.stringify({ content: msg, sessionId }),
+    });
+
+    // Auto-hide loading sau 15s nếu không nhận được reply
+    setTimeout(() => setLoading(false), 15000);
   };
 
   return (
@@ -258,6 +326,11 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
           background: #4ade80;
           box-shadow: 0 0 0 2px rgba(74,222,128,0.3);
           animation: ss-pulse 2s ease-in-out infinite;
+        }
+        .ss-status-dot--offline {
+          background: #94a3b8;
+          box-shadow: none;
+          animation: none;
         }
         @keyframes ss-pulse {
           0%, 100% { box-shadow: 0 0 0 2px rgba(74,222,128,0.3); }
@@ -390,79 +463,6 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
           40% { transform: translateY(-6px); }
         }
 
-        /* ── Product suggestions ── */
-        .ss-suggestions {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-top: 10px;
-          padding-top: 10px;
-          border-top: 1px solid #f1f5f9;
-        }
-        .ss-suggestion-card {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 8px 10px;
-          border-radius: 10px;
-          border: 1px solid #e5e7eb;
-          background: white;
-          text-decoration: none;
-          color: inherit;
-          transition: all 0.15s;
-        }
-        .ss-suggestion-card:hover {
-          border-color: #2563eb;
-          box-shadow: 0 2px 8px rgba(37,99,235,0.1);
-          transform: translateY(-1px);
-        }
-        .ss-suggestion-img {
-          flex-shrink: 0;
-          width: 44px;
-          height: 44px;
-          border-radius: 8px;
-          overflow: hidden;
-          background: #f1f5f9;
-        }
-        .ss-suggestion-img img { width: 100%; height: 100%; object-fit: cover; }
-        .ss-suggestion-img-placeholder {
-          width: 100%; height: 100%;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .ss-suggestion-info { flex: 1; min-width: 0; }
-        .ss-suggestion-name {
-          display: block;
-          font-size: 12px;
-          font-weight: 500;
-          color: #1e293b;
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          line-height: 1.35;
-        }
-        .ss-suggestion-price {
-          display: block;
-          font-size: 12px;
-          font-weight: 600;
-          color: #16a34a;
-          margin-top: 2px;
-        }
-        .ss-suggestion-arrow { color: #94a3b8; flex-shrink: 0; }
-
-        /* ── Sources ── */
-        .ss-sources {
-          margin-top: 8px;
-          padding-top: 8px;
-          border-top: 1px solid #f1f5f9;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-          align-items: center;
-        }
-        .ss-sources-label { font-size: 10.5px; color: #94a3b8; font-weight: 500; }
-        .ss-source-item { font-size: 10.5px; color: #94a3b8; }
-
         /* ── Quick Actions ── */
         .ss-quick-wrap {
           flex-shrink: 0;
@@ -571,8 +571,10 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
             <div className="ss-header-info">
               <div className="ss-header-name">SecureShop Assistant</div>
               <div className="ss-header-status">
-                <span className="ss-status-dot" />
-                <span className="ss-header-status-text">Trực tuyến • Phản hồi tức thì</span>
+                <span className={`ss-status-dot ${stompConnected ? '' : 'ss-status-dot--offline'}`} />
+                <span className="ss-header-status-text">
+                  {stompConnected ? "Trực tuyến • Phản hồi tức thì" : "Đang kết nối..."}
+                </span>
               </div>
             </div>
           </div>
@@ -597,8 +599,13 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
 
         {/* ─── Messages ─── */}
         <div ref={listRef} className="ss-messages">
-          {messages.map((m, i) => (
-            <MessageBubble key={i} msg={m} />
+          {!initDone && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}>
+              <TypingIndicator />
+            </div>
+          )}
+          {initDone && messages.map((m, i) => (
+            <MessageBubble key={m.id || `msg-${i}`} msg={m} />
           ))}
           {loading && <TypingIndicator />}
         </div>
@@ -626,9 +633,10 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
               className="ss-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Nhập câu hỏi của bạn..."
+              placeholder={stompConnected ? "Nhập câu hỏi của bạn..." : "Đang kết nối..."}
               autoComplete="off"
               aria-label="Nhập câu hỏi"
+              disabled={!stompConnected || !sessionId}
             />
             <button
               type="submit"
@@ -642,7 +650,7 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
               </svg>
             </button>
           </form>
-          <div className="ss-footer-note">SecureShop · Hỗ trợ AI 24/7</div>
+          <div className="ss-footer-note">SecureShop · Chat trực tuyến 24/7</div>
         </div>
       </div>
     </>

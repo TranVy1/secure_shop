@@ -13,7 +13,6 @@ import org.thymeleaf.context.Context;
 import secure_shop.backend.entities.Order;
 import secure_shop.backend.entities.OrderItem;
 import secure_shop.backend.service.EmailService;
- 
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -44,7 +43,7 @@ public class EmailServiceImpl implements EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setFrom("support@myshop.com");
+        helper.setFrom("support@mc4vn.net");
         helper.setTo(to);
         helper.setSubject("🔐 Đặt lại mật khẩu - SecureShop");
         helper.setText(htmlContent, true);
@@ -63,7 +62,7 @@ public class EmailServiceImpl implements EmailService {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        helper.setFrom("support@myshop.com");
+        helper.setFrom("support@mc4vn.net");
         helper.setTo(to);
         helper.setSubject("✉️ Xác thực tài khoản - SecureShop");
         helper.setText(htmlContent, true);
@@ -83,9 +82,9 @@ public class EmailServiceImpl implements EmailService {
         context.setVariable("orderName", getOrderName(order));
         context.setVariable("customerName", order.getUser().getName());
         String createdAtStr = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
-            .withLocale(Locale.forLanguageTag("vi-VN"))
-            .withZone(ZoneId.systemDefault())
-            .format(order.getCreatedAt());
+                .withLocale(Locale.forLanguageTag("vi-VN"))
+                .withZone(ZoneId.systemDefault())
+                .format(order.getCreatedAt());
         context.setVariable("createdAt", createdAtStr);
 
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
@@ -94,7 +93,7 @@ public class EmailServiceImpl implements EmailService {
         context.setVariable("shippingFee", formatCurrency(order.getShippingFee(), currencyFormat));
         context.setVariable("grandTotal", formatCurrency(order.getGrandTotal(), currencyFormat));
         context.setVariable("hasPaid", order.getHasPaid() ? "Đã thanh toán" : "Chưa thanh toán");
-        
+
         // Translate Payment Status
         String paymentStatusVi = switch (order.getPaymentStatus()) {
             case PAID -> "Đã thanh toán";
@@ -140,7 +139,8 @@ public class EmailServiceImpl implements EmailService {
                     addressBuilder.append(v).append(", ");
                 }
             });
-            String address = addressBuilder.length() > 2 ? addressBuilder.substring(0, addressBuilder.length() - 2) : "";
+            String address = addressBuilder.length() > 2 ? addressBuilder.substring(0, addressBuilder.length() - 2)
+                    : "";
             context.setVariable("shippingAddress", address);
         } else {
             context.setVariable("shippingAddress", "(Không có địa chỉ)");
@@ -154,7 +154,7 @@ public class EmailServiceImpl implements EmailService {
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("support@myshop.com");
+            helper.setFrom("support@mc4vn.net");
             helper.setTo(order.getUser().getEmail());
             helper.setSubject("🛒 Xác nhận đơn hàng [" + getOrderName(order) + "] - SecureShop");
             helper.setText(htmlContent, true);
@@ -163,15 +163,18 @@ public class EmailServiceImpl implements EmailService {
             log.info("Order email sent to {} for orderId={}", order.getUser().getEmail(), order.getId());
         } catch (Exception ex) {
             log.error("Failed to send order email for orderId={}", order.getId(), ex);
-            if (ex instanceof MessagingException me) throw me;
-            if (ex instanceof IOException ioe) throw ioe;
+            if (ex instanceof MessagingException me)
+                throw me;
+            if (ex instanceof IOException ioe)
+                throw ioe;
         }
     }
 
     @Override
     public void sendThankYouEmail(Order order) throws MessagingException, IOException {
         if (order == null || order.getUser() == null || order.getUser().getEmail() == null) {
-            log.warn("Skip sending thank you email: missing user/email. orderId={}", order != null ? order.getId() : null);
+            log.warn("Skip sending thank you email: missing user/email. orderId={}",
+                    order != null ? order.getId() : null);
             return;
         }
 
@@ -179,7 +182,7 @@ public class EmailServiceImpl implements EmailService {
         context.setVariable("orderId", order.getId());
         context.setVariable("orderName", getOrderName(order));
         context.setVariable("customerName", order.getUser().getName());
-        
+
         String orderLink = frontendBaseUrl.replaceAll("/$", "") + "/orders/" + order.getId();
         context.setVariable("orderLink", orderLink);
 
@@ -188,7 +191,7 @@ public class EmailServiceImpl implements EmailService {
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom("support@myshop.com");
+            helper.setFrom("support@mc4vn.net");
             helper.setTo(order.getUser().getEmail());
             helper.setSubject("💕 Cảm ơn bạn đã mua [" + getOrderName(order) + "] tại SecureShop");
             helper.setText(htmlContent, true);
@@ -197,12 +200,12 @@ public class EmailServiceImpl implements EmailService {
             log.info("Thank you email sent to {} for orderId={}", order.getUser().getEmail(), order.getId());
         } catch (Exception ex) {
             log.error("Failed to send thank you email for orderId={}", order.getId(), ex);
-            if (ex instanceof MessagingException me) throw me;
-            if (ex instanceof IOException ioe) throw ioe;
+            if (ex instanceof MessagingException me)
+                throw me;
+            if (ex instanceof IOException ioe)
+                throw ioe;
         }
     }
-
-    
 
     private String getOrderName(Order order) {
         if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
@@ -217,7 +220,8 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String formatCurrency(BigDecimal value, NumberFormat nf) {
-        if (value == null) return nf.format(0);
+        if (value == null)
+            return nf.format(0);
         return nf.format(value);
     }
 
@@ -227,9 +231,9 @@ public class EmailServiceImpl implements EmailService {
                 item.getQuantity() != null ? item.getQuantity() : 0,
                 item.getUnitPrice(),
                 item.getLineTotal(),
-                item.getProduct() != null ? item.getProduct().getSku() : null
-        );
+                item.getProduct() != null ? item.getProduct().getSku() : null);
     }
 
-    private record ItemView(String name, Integer quantity, BigDecimal unitPrice, BigDecimal lineTotal, String sku) {}
+    private record ItemView(String name, Integer quantity, BigDecimal unitPrice, BigDecimal lineTotal, String sku) {
+    }
 }

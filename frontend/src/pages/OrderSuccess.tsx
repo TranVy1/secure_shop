@@ -78,32 +78,7 @@ const OrderSuccess: React.FC = () => {
             Tiếp tục mua hàng
           </Link>
 
-          {/* Mock Payment Button (Dev Only) */}
-          {location.state?.orderData &&
-            location.state.orderData.paymentStatus !== 'PAID' && (
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <p className="text-sm text-gray-500 mb-3">🛠️ Khu vực dành cho Developer (Sandbox Mode)</p>
-                <button
-                  onClick={async () => {
-                    try {
-                      const orderId = location.state.orderData.orderId;
-                      await PaymentApi.mockPaymentSuccess({
-                        orderId,
-                        paymentMethod: location.state.orderData.paymentMethod
-                      });
-                      toast.success("Giả lập thanh toán thành công! Doanh thu đã được ghi nhận.");
-                      // Optional: reload or update UI state
-                    } catch (error) {
-                      toast.error("Lỗi khi giả lập thanh toán");
-                      console.error(error);
-                    }
-                  }}
-                  className="bg-yellow-100/100 text-yellow-800 px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-200 transition-colors border border-yellow-300"
-                >
-                  ⚡ Giả lập Thanh toán Thành công (Mock Success)
-                </button>
-              </div>
-            )}
+
         </motion.div>
 
         {/* Sản phẩm tương tự */}

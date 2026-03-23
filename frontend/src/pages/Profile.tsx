@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { logout, restoreAuthSuccess } from '../stores/authSlice';
 import { toast } from 'react-toastify';
-import { userApi, AddressApi, ReviewApi, SupportTicketApi } from '../utils/api';
+import { userApi, AddressApi, ReviewApi, SupportTicketApi, orderApi } from '../utils/api';
 import axiosInstance from '../utils/axiosConfig';
 import { authService } from '../utils/authService';
 import { imageUploadService } from '../utils/imageUploadService';
@@ -56,6 +56,9 @@ const Profile: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editRating, setEditRating] = useState(5);
@@ -131,6 +134,18 @@ const Profile: React.FC = () => {
       toast.error('Không thể tải đánh giá');
     } finally {
       setLoadingReviews(false);
+    }
+  };
+
+  const fetchMyOrders = async () => {
+    try {
+      setLoadingOrders(true);
+      const data = await orderApi.getOrders();
+      setOrders(data);
+    } catch {
+      toast.error('Không thể tải lịch sử đơn hàng');
+    } finally {
+      setLoadingOrders(false);
     }
   };
 
@@ -412,6 +427,8 @@ const Profile: React.FC = () => {
       fetchProvinces();
     } else if (activeTab === 'support') {
       fetchMyTickets();
+    } else if (activeTab === 'orders') {
+      fetchMyOrders();
     }
   }, [activeTab]);
 
@@ -537,6 +554,7 @@ const Profile: React.FC = () => {
 
   const menu = [
     { key: 'account', label: 'Thông tin cá nhân' },
+    { key: 'orders', label: 'Lịch sử mua hàng' },
     { key: 'reviews', label: 'Đánh giá của tôi' },
     { key: 'address', label: 'Địa chỉ' },
     { key: 'support', label: 'Hỗ trợ' },
@@ -646,6 +664,71 @@ const Profile: React.FC = () => {
               Lưu thay đổi
             </button>
           </form>
+        );
+
+      case 'orders':
+        return (
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-zinc-800">Lịch sử đơn hàng đã mua</h2>
+            {loadingOrders ? (
+              <p className="text-gray-500">Đang tải lịch sử đơn hàng...</p>
+            ) : orders.length === 0 ? (
+              <p className="text-gray-500">Bạn chưa có đơn hàng nào.</p>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="border p-4 rounded-lg bg-white shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div>
+                      <h3 className="font-semibold text-lg text-purple-700">Mã đơn: #{order.id.slice(0,8).toUpperCase()}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')} {new Date(order.createdAt).toLocaleTimeString('vi-VN')}
+                      </p>
+                      
+                      <div className="mt-3 text-sm flex gap-3">
+                        <div>
+                          <span className="font-medium mr-1 text-gray-600">Trạng thái:</span>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
+                            order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {order.status === 'PENDING' ? 'Chờ xác nhận' :
+                             order.status === 'PROCESSING' ? 'Đang xử lý' :
+                             order.status === 'SHIPPED' ? 'Đang giao' :
+                             order.status === 'DELIVERED' ? 'Đã giao' :
+                             order.status === 'CANCELLED' ? 'Đã hủy' : order.status}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium mr-1 text-gray-600">Thanh toán:</span>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700' : 
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {order.paymentStatus === 'PAID' ? 'Đã thanh toán' :
+                             order.paymentStatus === 'UNPAID' ? 'Chưa thanh toán' :
+                             order.paymentStatus === 'REFUNDED' ? 'Đã hoàn tiền' : order.paymentStatus}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 sm:mt-0 text-left sm:text-right flex flex-col justify-end items-start sm:items-end">
+                      <p className="text-lg font-bold text-red-500 mb-3">
+                        {order.grandTotal ? order.grandTotal.toLocaleString('vi-VN') : '0'} ₫
+                      </p>
+                      <button
+                        onClick={() => navigate(`/orders/${order.id}`)}
+                        className="px-4 py-1.5 border border-purple-600 text-purple-600 font-medium rounded hover:bg-purple-50 transition-colors text-sm"
+                      >
+                        Xem chi tiết
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         );
 
       case 'reviews':

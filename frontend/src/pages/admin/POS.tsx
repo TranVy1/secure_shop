@@ -100,8 +100,8 @@ const ReceiptModal: React.FC<{
                         </p>
                         <span
                             className={`mt-2 inline-block px-3 py-1 rounded-full text-xs font-bold ${ok
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : "bg-red-100 text-red-700"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-red-100 text-red-700"
                                 }`}
                         >
                             {ok ? "✓ Hoàn tất. Cảm ơn Qúy Khách" : "✕ Đã hủy"}
@@ -286,7 +286,7 @@ const POS: React.FC = () => {
 
     // Categories
     const [categories, setCategories] = useState<CategorySummary[]>([]);
-    const [activeCategoryId, setActiveCategoryId] = useState<string>("all");
+    const [activeCategoryId, setActiveCategoryId] = useState<number | "all">("all");
 
     // Product panel
     const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -511,8 +511,8 @@ const POS: React.FC = () => {
                             <button
                                 onClick={() => setActiveCategoryId("all")}
                                 className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer border-none text-left transition-all duration-200 ${activeCategoryId === "all"
-                                        ? "bg-violet-50 text-violet-700 font-semibold"
-                                        : "bg-transparent text-slate-600 font-medium hover:bg-slate-100"
+                                    ? "bg-violet-50 text-violet-700 font-semibold"
+                                    : "bg-transparent text-slate-600 font-medium hover:bg-slate-100"
                                     }`}
                             >
                                 <span className="text-[14px]">Tất cả sản phẩm</span>
@@ -525,8 +525,8 @@ const POS: React.FC = () => {
                                     key={cat.id}
                                     onClick={() => setActiveCategoryId(cat.id)}
                                     className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer border-none text-left transition-all duration-200 ${activeCategoryId === cat.id
-                                            ? "bg-violet-50 text-violet-700 font-semibold"
-                                            : "bg-transparent text-slate-600 font-medium hover:bg-slate-100"
+                                        ? "bg-violet-50 text-violet-700 font-semibold"
+                                        : "bg-transparent text-slate-600 font-medium hover:bg-slate-100"
                                         }`}
                                 >
                                     <span className="text-[14px]">{cat.name}</span>
@@ -560,10 +560,10 @@ const POS: React.FC = () => {
                         <form
                             onSubmit={handleScan}
                             className={`relative bg-white rounded-xl border flex items-center px-4 shadow-sm transition-all focus-within:ring-2 focus-within:ring-opacity-50 ${scanMsg
-                                    ? scanMsg.ok
-                                        ? "border-emerald-500 focus-within:ring-emerald-100"
-                                        : "border-red-500 focus-within:ring-red-100"
-                                    : "border-slate-200 focus-within:border-violet-400 focus-within:ring-violet-100"
+                                ? scanMsg.ok
+                                    ? "border-emerald-500 focus-within:ring-emerald-100"
+                                    : "border-red-500 focus-within:ring-red-100"
+                                : "border-slate-200 focus-within:border-violet-400 focus-within:ring-violet-100"
                                 }`}
                         >
                             <ScanLine size={18} className="text-violet-600" />
@@ -736,9 +736,9 @@ const POS: React.FC = () => {
                                                             (item.product.availableStock ?? 9999)
                                                         }
                                                         className={`w-7 h-7 flex items-center justify-center rounded-md border-none bg-transparent cursor-pointer transition-colors ${item.quantity >=
-                                                                (item.product.availableStock ?? 9999)
-                                                                ? "text-slate-300 cursor-not-allowed"
-                                                                : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm"
+                                                            (item.product.availableStock ?? 9999)
+                                                            ? "text-slate-300 cursor-not-allowed"
+                                                            : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm"
                                                             }`}
                                                     >
                                                         <Plus size={14} />
@@ -788,8 +788,8 @@ const POS: React.FC = () => {
                                         key={v}
                                         onClick={() => setPayMethod(v as PayMethod)}
                                         className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-violet-300 ${active
-                                                ? "border-violet-600 bg-violet-50 text-violet-700 font-bold shadow-sm"
-                                                : "border-slate-200 bg-white text-slate-500 hover:border-violet-300 hover:bg-slate-50 font-medium"
+                                            ? "border-violet-600 bg-violet-50 text-violet-700 font-bold shadow-sm"
+                                            : "border-slate-200 bg-white text-slate-500 hover:border-violet-300 hover:bg-slate-50 font-medium"
                                             }`}
                                     >
                                         <Icon size={22} className={active ? "text-violet-600" : "text-slate-400"} />
@@ -816,8 +816,8 @@ const POS: React.FC = () => {
                                             );
                                         }}
                                         className={`w-full box-border pt-3.5 pb-3.5 pl-24 pr-4 text-[16px] font-bold text-right border rounded-xl outline-none bg-white transition-colors focus:ring-2 ${cashInput && !cashOk
-                                                ? "border-red-400 focus:ring-red-100 text-red-600"
-                                                : "border-slate-300 focus:border-violet-500 focus:ring-violet-100 text-slate-900"
+                                            ? "border-red-400 focus:ring-red-100 text-red-600"
+                                            : "border-slate-300 focus:border-violet-500 focus:ring-violet-100 text-slate-900"
                                             }`}
                                         placeholder="0 ₫"
                                     />
@@ -853,8 +853,8 @@ const POS: React.FC = () => {
                             onClick={handleCheckout}
                             disabled={!cart.length || checking || !cashOk}
                             className={`w-full h-[52px] rounded-xl border-none text-[16px] font-bold flex items-center justify-center gap-2 transition-all duration-300 outline-none ${!cart.length || checking || !cashOk
-                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-gradient-to-r from-violet-600 to-cyan-500 text-white cursor-pointer hover:opacity-95 hover:shadow-[0_8px_20px_-6px_rgba(124,58,237,0.5)] active:scale-[0.98] focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
+                                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                : "bg-gradient-to-r from-violet-600 to-cyan-500 text-white cursor-pointer hover:opacity-95 hover:shadow-[0_8px_20px_-6px_rgba(124,58,237,0.5)] active:scale-[0.98] focus:ring-2 focus:ring-offset-2 focus:ring-violet-500"
                                 }`}
                         >
                             {checking ? (
