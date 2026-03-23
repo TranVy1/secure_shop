@@ -93,7 +93,12 @@ public class SecurityConfig {
                                                                 "/api/auth/logout",
                                                                 "/oauth2/**",
                                                                 "/login/oauth2/**",
-                                                                "/error")
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui.html",
+                                                                "/swagger-ui/**",
+                                                                "/actuator/**",
+                                                                "/error",
+                                                                "/ws/**")
                                                 .permitAll()
                                                 .requestMatchers("/api/auth/me").authenticated()
 

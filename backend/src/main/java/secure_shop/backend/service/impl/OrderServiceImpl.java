@@ -30,12 +30,14 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
+    private final MeterRegistry meterRegistry;
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final ProductRepository productRepository;
@@ -45,6 +47,8 @@ public class OrderServiceImpl implements OrderService {
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final DiscountRepository discountRepository;
+    private final secure_shop.backend.repositories.PointHistoryRepository pointHistoryRepository;
+    private final secure_shop.backend.service.NotificationService notificationService;
 
     @Override
     public OrderDTO createOrder(OrderCreateRequest request, UUID userId) {
@@ -119,12 +123,49 @@ public class OrderServiceImpl implements OrderService {
             discountTotal = calculateDiscountAmount(discount, subTotal, shippingFee, user);
         }
 
+        // --- Tiêu Điểm Thưởng ---
+        if (user != null && request.getPointsUsed() != null && request.getPointsUsed() > 0) {
+            Integer pointsUsed = request.getPointsUsed();
+            if (user.getPoints() < pointsUsed) {
+                throw new BusinessRuleViolationException("Người dùng không đủ điểm thưởng");
+            }
+            // 1 điểm = 1đ
+            BigDecimal pointDiscount = BigDecimal.valueOf(pointsUsed);
+            discountTotal = discountTotal.add(pointDiscount);
+            
+            // Cap to max
+            BigDecimal maxDiscount = subTotal.add(shippingFee);
+            if (discountTotal.compareTo(maxDiscount) > 0) {
+                discountTotal = maxDiscount;
+            }
+        }
+
         order.setSubTotal(subTotal);
         order.setDiscountTotal(discountTotal);
         order.setShippingFee(shippingFee);
 
         // Persist order (totals will be calculated by @PrePersist)
         Order savedOrder = orderRepository.save(order);
+
+        // Trừ điểm và lưu lịch sử nếu có dùng điểm
+        if (user != null && request.getPointsUsed() != null && request.getPointsUsed() > 0) {
+            Integer pointsUsed = request.getPointsUsed();
+            user.setPoints(user.getPoints() - pointsUsed);
+            userRepository.save(user);
+
+            secure_shop.backend.entities.PointHistory ph = secure_shop.backend.entities.PointHistory.builder()
+                    .user(user)
+                    .order(savedOrder)
+                    .pointChange(-pointsUsed)
+                    .reason("Sử dụng điểm cho đơn hàng " + savedOrder.getId())
+                    .build();
+            pointHistoryRepository.save(ph);
+        }
+
+        // Đẩy metric đơn hàng mới lên Prometheus
+        if (savedOrder != null && savedOrder.getId() != null) {
+            meterRegistry.counter("orders_placed_total", "source", "web").increment();
+        }
 
         if (discount != null) {
             discount.setUsed(discount.getUsed() == null ? 1 : discount.getUsed() + 1);
@@ -138,6 +179,16 @@ public class OrderServiceImpl implements OrderService {
             } catch (Exception ex) {
             }
         }
+
+        // Bắn thông báo qua WebSocket
+        if (savedOrder.getUser() != null && savedOrder.getUser().getId() != null) {
+            notificationService.sendNotification(
+                    savedOrder.getUser().getId(),
+                    "Đơn hàng mới",
+                    "Đơn hàng #" + savedOrder.getId() + " của bạn đã được đặt thành công!"
+            );
+        }
+
         return orderMapper.toDTO(savedOrder);
     }
 
@@ -389,6 +440,27 @@ public class OrderServiceImpl implements OrderService {
                 order.setConfirmedAt(Instant.now());
             }
 
+            // Tích điểm thưởng (1% giá trị thanh toán thực tế)
+            if (order.getUser() != null) {
+                BigDecimal finalAmount = order.getSubTotal().subtract(order.getDiscountTotal() != null ? order.getDiscountTotal() : BigDecimal.ZERO).add(order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO);
+                if (finalAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    int pointsEarned = finalAmount.multiply(new BigDecimal("0.01")).intValue();
+                    if (pointsEarned > 0) {
+                        User u = order.getUser();
+                        u.setPoints(u.getPoints() + pointsEarned);
+                        userRepository.save(u);
+                        
+                        secure_shop.backend.entities.PointHistory ph = secure_shop.backend.entities.PointHistory.builder()
+                                .user(u)
+                                .order(order)
+                                .pointChange(pointsEarned)
+                                .reason("Hoàn thành đơn hàng " + order.getId())
+                                .build();
+                        pointHistoryRepository.save(ph);
+                    }
+                }
+            }
+
             // Also update payment entity status if exists
             if (payment != null) {
                 if (payment.getStatus() != secure_shop.backend.enums.PaymentStatus.PAID) {
@@ -405,6 +477,20 @@ public class OrderServiceImpl implements OrderService {
             } catch (Exception e) {
                 // Log and ignore email error
             }
+        }
+
+        if (order.getUser() != null && order.getUser().getId() != null) {
+            String statusMsg = switch (newStatus) {
+                case WAITING_FOR_DELIVERY -> "đang chờ giao hàng";
+                case DELIVERED -> "đã được giao thành công";
+                case CANCELLED -> "đã bị hủy";
+                default -> "đã cập nhật trạng thái thành " + newStatus;
+            };
+            notificationService.sendNotification(
+                    order.getUser().getId(),
+                    "Cập nhật đơn hàng",
+                    "Đơn hàng #" + order.getId() + " của bạn " + statusMsg + "."
+            );
         }
 
         Order updatedOrder = orderRepository.save(order);

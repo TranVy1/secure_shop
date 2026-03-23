@@ -22,6 +22,7 @@ interface ChatPanelProps {
   onClose?: () => void;
   onMinimize?: () => void;
   fullscreen?: boolean;
+  incomingNotification?: ChatMsg | null;
 }
 
 // ─── Quick Actions ────────────────────────────────────────────────────────────
@@ -132,7 +133,7 @@ function MessageBubble({ msg }: { msg: ChatMsg }) {
 
 // ─── Main Panel ──────────────────────────────────────────────────────────────
 
-export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanelProps) {
+export default function ChatPanel({ onClose, onMinimize, fullscreen, incomingNotification }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
       role: "assistant",
@@ -144,6 +145,17 @@ export default function ChatPanel({ onClose, onMinimize, fullscreen }: ChatPanel
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Nhận thông báo từ WebSocket
+  useEffect(() => {
+    if (incomingNotification) {
+      setMessages((m) => {
+        // Ngăn chặn duplicate (so sánh tham chiếu object)
+        if (m.length > 0 && m[m.length - 1] === incomingNotification) return m;
+        return [...m, incomingNotification];
+      });
+    }
+  }, [incomingNotification]);
 
   const canSend = useMemo(() => input.trim().length > 0 && !loading, [input, loading]);
 

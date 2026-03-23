@@ -33,4 +33,6 @@ public class OrderCreateRequest implements Serializable {
     private UUID userId;
 
     private PaymentMethod paymentMethod;
+
+    private Integer pointsUsed;
 }

@@ -1,11 +1,72 @@
 import { useEffect, useRef, useState } from "react";
 import ChatPanel from "./ChatPanel";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { toast } from "react-toastify";
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [latestNotification, setLatestNotification] = useState<any>(null);
   const wasOpenRef = useRef(false);
+  const openRef = useRef(open);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  // STOMP WebSocket Connection cho Notification
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return; // Chỉ connect khi đã đăng nhập
+
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8090/api";
+    // Đổi endpoint từ /api thành /ws
+    const wsUrl = API_URL.replace("/api", "") + "/ws";
+
+    const client = new Client({
+      // Dùng SockJS làm fallback nếu trình duyệt không hỗ trợ native WS tốt
+      webSocketFactory: () => new SockJS(wsUrl),
+      // Gửi token qua headers khi connect (Lưu ý: Header này không hoạt động trực tiếp trong native WebSockets của Browser, nhưng hoại động trong StompJS qua SockJS)
+      connectHeaders: {
+        Authorization: `Bearer ${token}`
+      },
+      debug: (str) => console.log('STOMP: ' + str),
+      reconnectDelay: 5000, // Tự động kết nối lại sau 5s nếu mất mạng
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    client.onConnect = () => {
+      console.log("Connected to STOMP WebSocket Notification Server");
+      // Lắng nghe vào kênh của user (ID sẽ được Spring resolve tự động qua Principal/JWT)
+      client.subscribe("/user/queue/notifications", (message) => {
+        if (message.body) {
+          const notification = JSON.parse(message.body);
+          toast.info(`🔔 ${notification.title}`, { position: "top-right", autoClose: 5000 });
+          
+          const newMsg = {
+            role: "assistant",
+            content: `🔔 [Hệ thống] ${notification.title}\n${notification.message}`,
+            timestamp: new Date()
+          };
+          
+          setLatestNotification(newMsg);
+          
+          if (!openRef.current) {
+            setUnread((prev) => Math.min(prev + 1, 99));
+          }
+        }
+      });
+    };
+
+    client.activate();
+
+    return () => {
+      client.deactivate();
+    };
+  }, []);
 
   // Keyboard shortcut: Escape to close
   useEffect(() => {
@@ -206,14 +267,14 @@ export default function ChatWidget() {
       {/* ── Desktop Panel ── */}
       {open && (
         <div className="ss-panel-wrapper ss-widget-panel-enter">
-          <ChatPanel onClose={handleClose} onMinimize={handleMinimize} />
+          <ChatPanel onClose={handleClose} onMinimize={handleMinimize} incomingNotification={latestNotification} />
         </div>
       )}
 
       {/* ── Mobile Fullscreen Panel ── */}
       {open && (
         <div className="ss-panel-fullscreen-wrapper">
-          <ChatPanel onClose={handleClose} fullscreen />
+          <ChatPanel onClose={handleClose} fullscreen incomingNotification={latestNotification} />
         </div>
       )}
     </>
