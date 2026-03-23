@@ -61,19 +61,16 @@ public class LiveChatSTOMPController {
         
         log.info("Admin {} phản hồi tới session {}: {}", adminId, payload.getSessionId(), payload.getContent());
 
-        // Lấy thông tin user của Session này
-        var session = liveChatService.getSessionHistory(payload.getSessionId());
-        if (session.isEmpty()) return;
-        UUID userId = session.get(0).getSessionId(); // Logic này tạm, cần refactor fetch user_id từ session, ta dùng query gián tiếp
-
+        // Lưu tin nhắn admin vào DB
         ChatMessageDTO savedMsg = liveChatService.saveAdminMessage(adminId, payload);
 
+        // Lấy userId từ sessionId để route tin nhắn
+        UUID destUserId = liveChatService.getUserIdBySessionId(payload.getSessionId());
+
         // Gửi tới User
-        // Vì trong Controller chưa truy xuất trực tiếp UserID từ STOMP payload hiệu quả, 
-        // Thay vì query DB ở đây, ta dùng service lấy Session metadata
-        UUID destUserId = liveChatService.getOrCreateSession(UUID.fromString(savedMsg.getSenderId().toString())).getUserId(); 
-        // Sửa: Lấy DestUserID thật từ API REST lịch sử
-        // Tạm cheat: Thực ra Admin biết UserID của khách hàng? Không, Admin chỉ biết SessionID.
-        // Ta cần LiveChatService phụ trợ:
+        messagingTemplate.convertAndSendToUser(destUserId.toString(), "/queue/chat", savedMsg);
+
+        // Gửi lại cho Admin (confirm)
+        messagingTemplate.convertAndSendToUser(adminId.toString(), "/queue/admin.chat", savedMsg);
     }
 }

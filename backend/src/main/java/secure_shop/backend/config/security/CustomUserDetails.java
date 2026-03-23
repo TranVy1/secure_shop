@@ -33,7 +33,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getId().toString(); // username = UUID
+        return user.getId().toString();
     }
 
     @Override

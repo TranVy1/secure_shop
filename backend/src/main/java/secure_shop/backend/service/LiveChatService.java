@@ -23,4 +23,5 @@ public interface LiveChatService {
     
     // Common
     List<ChatMessageDTO> getSessionHistory(UUID sessionId);
+    UUID getUserIdBySessionId(UUID sessionId);
 }

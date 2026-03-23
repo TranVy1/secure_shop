@@ -495,6 +495,35 @@ export const chatApi = {
   },
 };
 
+// Live Chat API (WebSocket-backed REST endpoints)
+export const liveChatApi = {
+  // User: Lấy hoặc tạo session
+  getMySession: async () => {
+    const response = await api.get("/live-chat/session/my");
+    return response.data;
+  },
+  // Common: Lấy lịch sử tin nhắn của session
+  getSessionHistory: async (sessionId: string) => {
+    const response = await api.get(`/live-chat/session/${sessionId}/history`);
+    return response.data;
+  },
+  // Admin: Lấy danh sách session đang active
+  getActiveSessions: async () => {
+    const response = await api.get("/live-chat/admin/sessions/active");
+    return response.data;
+  },
+  // Admin: Tiếp nhận session
+  assignSession: async (sessionId: string) => {
+    const response = await api.post(`/live-chat/admin/sessions/${sessionId}/assign`);
+    return response.data;
+  },
+  // Admin: Đóng session
+  closeSession: async (sessionId: string) => {
+    const response = await api.post(`/live-chat/admin/sessions/${sessionId}/close`);
+    return response.data;
+  },
+};
+
 // ✅ Address API - NEW
 export const AddressApi = {
   // Lấy tất cả địa chỉ của user

@@ -25,7 +25,7 @@ public class LiveChatController {
     @GetMapping("/session/my")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChatSessionDTO> getMySession(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(liveChatService.getOrCreateSession(userDetails.getId()));
+        return ResponseEntity.ok(liveChatService.getOrCreateSession(userDetails.getUser().getId()));
     }
 
     @GetMapping("/session/{sessionId}/history")
@@ -49,7 +49,7 @@ public class LiveChatController {
             @PathVariable UUID sessionId, 
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         
-        return ResponseEntity.ok(liveChatService.assignAdminToSession(sessionId, userDetails.getId()));
+        return ResponseEntity.ok(liveChatService.assignAdminToSession(sessionId, userDetails.getUser().getId()));
     }
 
     @PostMapping("/admin/sessions/{sessionId}/close")
@@ -58,7 +58,7 @@ public class LiveChatController {
             @PathVariable UUID sessionId, 
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         
-        liveChatService.closeSession(sessionId, userDetails.getId());
+        liveChatService.closeSession(sessionId, userDetails.getUser().getId());
         return ResponseEntity.ok().build();
     }
 }

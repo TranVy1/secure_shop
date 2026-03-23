@@ -16,7 +16,7 @@ import secure_shop.backend.entities.User;
 import secure_shop.backend.enums.ChatSenderType;
 import secure_shop.backend.repository.ChatMessageRepository;
 import secure_shop.backend.repository.ChatSessionRepository;
-import secure_shop.backend.repository.UserRepository;
+import secure_shop.backend.repositories.UserRepository;
 import secure_shop.backend.service.LiveChatService;
 import secure_shop.backend.service.GeminiRestClient;
 
@@ -55,10 +55,13 @@ public class LiveChatServiceImpl implements LiveChatService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+
+        // Save session FIRST so it's no longer transient
+        newSession = sessionRepository.save(newSession);
         
         SystemMessage("Hệ thống", "Chào bạn, bạn cần hỗ trợ gì ạ?", newSession);
 
-        return mapToSessionDTO(sessionRepository.save(newSession));
+        return mapToSessionDTO(newSession);
     }
 
     @Override
@@ -181,6 +184,14 @@ public class LiveChatServiceImpl implements LiveChatService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public UUID getUserIdBySessionId(UUID sessionId) {
+        ChatSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+        return session.getUser().getId();
+    }
+
     private void SystemMessage(String type, String content, ChatSession session) {
         ChatMessage msg = ChatMessage.builder()
                 .session(session)
@@ -191,11 +202,26 @@ public class LiveChatServiceImpl implements LiveChatService {
                 .build();
         messageRepository.save(msg);
         
+        ChatMessageDTO dto = mapToMessageDTO(msg);
+        
+        // Gửi tới User
         messagingTemplate.convertAndSendToUser(
                 session.getUser().getId().toString(),
                 "/queue/chat",
-                mapToMessageDTO(msg)
+                dto
         );
+        
+        // Nếu có Admin đang assigned, gửi cho Admin
+        if (session.getAdmin() != null) {
+            messagingTemplate.convertAndSendToUser(
+                    session.getAdmin().getId().toString(),
+                    "/queue/admin.chat",
+                    dto
+            );
+        }
+
+        // Broadcast tới admin dashboard để refresh danh sách sessions
+        messagingTemplate.convertAndSend("/topic/admin.chat-sessions", dto);
     }
 
     private ChatSessionDTO mapToSessionDTO(ChatSession session) {
