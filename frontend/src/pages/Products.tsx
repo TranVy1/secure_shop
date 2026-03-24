@@ -195,7 +195,7 @@ const Products: React.FC = () => {
     setMinPrice(tempMinPrice);
     setMaxPrice(tempMaxPrice);
     setPage(0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // window.scrollTo({ top: 0, behavior: "smooth" }); // Không scroll khi áp dụng giá
   };
 
   const handleResetPriceFilter = () => {
@@ -204,7 +204,7 @@ const Products: React.FC = () => {
     setTempMinPrice("");
     setTempMaxPrice("");
     setPage(0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // window.scrollTo({ top: 0, behavior: "smooth" }); // Không scroll khi reset giá
   };
 
   const handleStockFilterChange = (
@@ -212,7 +212,7 @@ const Products: React.FC = () => {
   ) => {
     setStockFilter(filter);
     setPage(0);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // window.scrollTo({ top: 0, behavior: "smooth" }); // Không scroll khi đổi tồn kho
   };
 
   const handleCategoryChange = (category: number) => {
@@ -221,7 +221,7 @@ const Products: React.FC = () => {
     if (category === 0) searchParams.delete("category");
     else searchParams.set("category", category.toString());
     setSearchParams(searchParams);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // window.scrollTo({ top: 0, behavior: "smooth" }); // Không scroll khi đổi danh mục
   };
 
   const handleBrandChange = (brand: number) => {
@@ -230,7 +230,7 @@ const Products: React.FC = () => {
     if (brand === 0) searchParams.delete("brand");
     else searchParams.set("brand", brand.toString());
     setSearchParams(searchParams);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // window.scrollTo({ top: 0, behavior: "smooth" }); // Không scroll khi đổi thương hiệu
   };
 
   const handleAddToCart = async (product: ProductSummary) => {
@@ -433,6 +433,67 @@ const Products: React.FC = () => {
 
             {/* Products Grid */}
             <div className="flex-1">
+              {/* Thanh filter/sort/search tách riêng, không bị AnimatePresence bao quanh */}
+              <div className="sticky top-16 z-40 bg-[#ededed] shadow-sm rounded-[2px] p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm transition-all duration-300">
+                <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pb-1 sm:pb-0">
+                  <span className="text-gray-600 whitespace-nowrap hidden sm:inline">Sắp xếp theo</span>
+                  <button
+                    onClick={() => { setSortBy("name"); setPage(0); }}
+                    className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "name" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
+                  >
+                    Phổ biến
+                  </button>
+                  <button
+                    onClick={() => { setSortBy("rating"); setPage(0); }}
+                    className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "rating" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
+                  >
+                    Đánh giá cao
+                  </button>
+
+                  <div className="relative group min-w-[180px] shadow-sm">
+                    <select
+                      value={sortBy.startsWith("price") ? sortBy : ""}
+                      onChange={(e) => {
+                        if (e.target.value) { setSortBy(e.target.value); setPage(0); }
+                      }}
+                      className={`w-full pl-4 pr-9 py-2 rounded-[2px] appearance-none cursor-pointer outline-none ${sortBy.startsWith("price") ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800"}`}
+                    >
+                      <option value="" disabled className="text-gray-800 bg-white">Giá</option>
+                      <option value="price-low" className="text-gray-800 bg-white">Giá: Thấp đến Cao</option>
+                      <option value="price-high" className="text-gray-800 bg-white">Giá: Cao đến Thấp</option>
+                    </select>
+                    <div
+                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${sortBy.startsWith("price") ? "text-white" : "text-gray-500"}`}
+                      aria-hidden
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-56 shadow-sm">
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(0);
+                      }}
+                      className="w-full pl-8 pr-3 py-2 border-none rounded-[2px] focus:ring-1 focus:ring-[#ee4d2d] outline-none text-[13px]"
+                    />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  </div>
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="lg:hidden flex items-center justify-center p-2 bg-white rounded-[2px] shadow-sm text-gray-700"
+                  >
+                    <Filter className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
               <AnimatePresence mode="wait">
                 {loading ? (
                   <motion.div
@@ -440,7 +501,7 @@ const Products: React.FC = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.2 }}
                     className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-3"
                   >
                     {[...Array(10)].map((_, index) => (
@@ -449,71 +510,12 @@ const Products: React.FC = () => {
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={`${selectedCategory}-${page}-${sortBy}-${searchTerm}-${minPrice}-${maxPrice}-${stockFilter}`}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    key={`grid-${selectedCategory}-${page}-${sortBy}-${minPrice}-${maxPrice}-${stockFilter}`} // bỏ searchTerm khỏi key để không remount khi gõ
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {/* Filter and Sort Bar */}
-                    <div className="sticky top-16 z-40 bg-[#ededed] shadow-sm rounded-[2px] p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm transition-all duration-300">
-                      <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pb-1 sm:pb-0">
-                        <span className="text-gray-600 whitespace-nowrap hidden sm:inline">Sắp xếp theo</span>
-                        <button
-                          onClick={() => { setSortBy("name"); setPage(0); }}
-                          className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "name" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
-                        >
-                          Phổ biến
-                        </button>
-                        <button
-                          onClick={() => { setSortBy("rating"); setPage(0); }}
-                          className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "rating" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
-                        >
-                          Đánh giá cao
-                        </button>
-
-                        <div className="relative group min-w-[150px] shadow-sm">
-                          <select
-                            value={sortBy.startsWith("price") ? sortBy : ""}
-                            onChange={(e) => {
-                              if (e.target.value) { setSortBy(e.target.value); setPage(0); }
-                            }}
-                            className={`w-full px-4 py-2 rounded-[2px] appearance-none cursor-pointer outline-none ${sortBy.startsWith("price") ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800"}`}
-                          >
-                            <option value="" disabled className="text-gray-800 bg-white">Giá</option>
-                            <option value="price-low" className="text-gray-800 bg-white">Giá: Thấp đến Cao</option>
-                            <option value="price-high" className="text-gray-800 bg-white">Giá: Cao đến Thấp</option>
-                          </select>
-                          <div className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${sortBy.startsWith("price") ? "text-white" : "text-gray-500"}`}>
-                            <ChevronDown className="w-4 h-4" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Search box and Mobile Filter Toggle */}
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <div className="relative flex-1 sm:w-56 shadow-sm">
-                          <input
-                            type="text"
-                            placeholder="Tìm kiếm..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                              setSearchTerm(e.target.value);
-                              setPage(0);
-                            }}
-                            className="w-full pl-8 pr-3 py-2 border-none rounded-[2px] focus:ring-1 focus:ring-[#ee4d2d] outline-none text-[13px]"
-                          />
-                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        </div>
-                        <button
-                          onClick={() => setShowFilters(!showFilters)}
-                          className="lg:hidden flex items-center justify-center p-2 bg-white rounded-[2px] shadow-sm text-gray-700"
-                        >
-                          <Filter className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-
                     {products.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">
@@ -531,9 +533,9 @@ const Products: React.FC = () => {
                           {products.map((product, index) => (
                             <motion.div
                               key={product.id}
-                              initial={{ opacity: 0, y: 20 }}
+                              initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3, delay: index * 0.05 }}
+                              transition={{ duration: 0.2, delay: index * 0.03 }}
                             >
                               <ProductCard
                                 product={product}
@@ -550,12 +552,12 @@ const Products: React.FC = () => {
                           pageSize={pageSize}
                           onPageChange={(newPage) => {
                             setPage(newPage);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
+                            window.scrollTo({ top: 0, behavior: "smooth" }); // chỉ scroll khi đổi trang
                           }}
                           onPageSizeChange={(newSize) => {
                             setPageSize(newSize);
                             setPage(0);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
+                            window.scrollTo({ top: 0, behavior: "smooth" }); // chỉ scroll khi đổi page size
                           }}
                         />
                       </>

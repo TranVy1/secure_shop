@@ -216,138 +216,150 @@ const Contact: React.FC = () => {
         </div>
       </section>
 
-      {/* Contact Form & Map Section */}
-      <section className="py-12 bg-white overflow-hidden">
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl font-bold text-zinc-800 mb-6">Gửi Yêu Cầu Hỗ Trợ (Ticket)</h2>
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ và tên <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    disabled={!!user}
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${user ? 'bg-gray-100' : ''}`}
-                    placeholder="Nhập họ và tên của bạn"
-                  />
-                </div>
+        {/*dangtuan24/3*/}
+        {/* Contact Form & Map Section */}
+        <section className="py-12 bg-white overflow-hidden">
+            <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-24">
+                <div className="grid lg:grid-cols-2 gap-12">
+                    {/* Contact Form */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                        viewport={{ once: true }}
+                    >
+                        <h2 className="text-3xl font-bold text-zinc-800 mb-6">Gửi Yêu Cầu Hỗ Trợ (Ticket)</h2>
+                        <div className="space-y-6 max-w-4xl">
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      disabled={!!user}
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className={`w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${user ? 'bg-gray-100' : ''}`}
-                      placeholder="email@example.com"
-                    />
-                  </div>
+                            {/* Họ tên */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Họ và tên <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    disabled={!!user}
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg 
+      focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+      ${user ? 'bg-gray-100' : ''}`}
+                                    placeholder="Nhập họ và tên của bạn"
+                                />
+                            </div>
 
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      disabled={!!user}
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={`w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${user ? 'bg-gray-100' : ''}`}
-                      placeholder="0123 456 789"
-                    />
-                  </div>
-                </div>
+                            {/* Email + Phone */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Email <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        disabled={!!user}
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg 
+        focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+        ${user ? 'bg-gray-100' : ''}`}
+                                        placeholder="email@example.com"
+                                    />
+                                </div>
 
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                    Tiêu đề <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Tóm tắt vấn đề của bạn..."
-                  />
-                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Số điện thoại
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        disabled={!!user}
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg 
+        focus:ring-2 focus:ring-purple-500 focus:border-transparent 
+        ${user ? 'bg-gray-100' : ''}`}
+                                        placeholder="0123 456 789"
+                                    />
+                                </div>
+                            </div>
 
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Chủ đề <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  >
-                    <option value="">Chọn chủ đề</option>
-                    <option value="Tư vấn sản phẩm">Tư vấn sản phẩm</option>
-                    <option value="Hỗ trợ kỹ thuật">Hỗ trợ kỹ thuật</option>
-                    <option value="Bảo hành">Bảo hành</option>
-                    <option value="Hợp tác kinh doanh">Hợp tác kinh doanh</option>
-                    <option value="Khác">Khác</option>
-                  </select>
-                </div>
+                            {/* Tiêu đề */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Tiêu đề <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="Tóm tắt vấn đề của bạn..."
+                                />
+                            </div>
 
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nội dung <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    rows={5}
-                    className="w-full max-w-xl px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                    placeholder="Nhập nội dung tin nhắn của bạn..."
-                  ></textarea>
-                </div>
+                            {/* Chủ đề */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Chủ đề <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    name="subject"
+                                    value={formData.subject}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="">Chọn chủ đề</option>
+                                    <option value="Tư vấn sản phẩm">Tư vấn sản phẩm</option>
+                                    <option value="Hỗ trợ kỹ thuật">Hỗ trợ kỹ thuật</option>
+                                    <option value="Bảo hành">Bảo hành</option>
+                                    <option value="Hợp tác kinh doanh">Hợp tác kinh doanh</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
 
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full max-w-xl bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Đang gửi...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-5 w-5" />
-                      <span>Gửi Yêu Cầu</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
+                            {/* Nội dung */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nội dung <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    name="message"
+                                    value={formData.message}
+                                    onChange={handleInputChange}
+                                    rows={5}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                                    placeholder="Nhập nội dung tin nhắn của bạn..."
+                                />
+                            </div>
+
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting}
+                                    className="max-w-xl bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold
+    hover:bg-purple-700 transition-colors flex items-center justify-center gap-2
+    disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                            <span>Đang gửi...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="h-5 w-5" />
+                                            <span>Gửi Yêu Cầu</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                    {/*dangtuan24/3*/}
 
             {/* Map & Additional Info */}
             <motion.div
