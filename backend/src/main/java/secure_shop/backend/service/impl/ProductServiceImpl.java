@@ -80,6 +80,7 @@ public class ProductServiceImpl implements ProductService {
         inventory.setOnHand(dto.getAvailableStock() != null ? dto.getAvailableStock() : 0);
         inventory.setReserved(0);
         inventoryRepository.save(inventory);
+        saved.setInventory(inventory); // Set inverse relationship to avoid NPE in mappers
 
         if (dto.getMediaAssets() != null && !dto.getMediaAssets().isEmpty()) {
             List<MediaAsset> mediaAssets = dto.getMediaAssets().stream()
@@ -94,11 +95,16 @@ public class ProductServiceImpl implements ProductService {
             product.setMediaAssets(mediaAssets);
         }
 
+        // Force a flush so constraint violations are thrown here, not swallowed by inner exception catch
+        productRepository.flush();
+        
         // Tự động tạo barcode cho sản phẩm mới
         try {
             barcodeService.autoGenerateForProduct(saved.getId(), saved.getSku());
         } catch (Exception e) {
-            // Không fail nếu barcode tạo lỗi
+            // Log the actual error instead of swallowing it silently
+            System.err.println("Error auto-generating barcode: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return productMapper.toProductDTO(saved);

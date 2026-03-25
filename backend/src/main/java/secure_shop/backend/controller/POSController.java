@@ -12,12 +12,14 @@ import secure_shop.backend.dto.invoice.InvoiceDetailDTO;
 import secure_shop.backend.dto.order.OrderDTO;
 import secure_shop.backend.dto.order.request.OrderCreateRequest;
 import secure_shop.backend.enums.PaymentMethod;
+import secure_shop.backend.enums.PaymentStatus;
 import secure_shop.backend.exception.BusinessRuleViolationException;
 import secure_shop.backend.service.InvoiceService;
 import secure_shop.backend.service.OrderService;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pos")
@@ -27,20 +29,41 @@ public class POSController {
     private final OrderService orderService;
     private final InvoiceService invoiceService;
 
-    /**
-     * POS Checkout — tạo đơn hàng atomic + invoice trong cùng request.
-     *
-     * Request body bổ sung:
-     *   cashReceived  — tiền khách đưa (bắt buộc nếu paymentMethod=COD)
-     *   paymentMethod — COD|CARD|VNPAY (mặc định COD)
-     */
+    // ── Inner DTOs ──────────────────────────────────────────────────────────
+
+    @lombok.Data
+    public static class POSCheckoutRequest {
+        @jakarta.validation.Valid
+        @jakarta.validation.constraints.NotEmpty(message = "Giỏ hàng không được trống")
+        private java.util.List<secure_shop.backend.dto.order.request.OrderItemRequest> items;
+
+        private PaymentMethod paymentMethod;
+
+        /** Tiền khách đưa (bắt buộc khi paymentMethod=COD) */
+        private BigDecimal cashReceived;
+    }
+
+    /** Response wrapper — COD returns invoice immediately, QR returns order only */
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class POSCheckoutResponse {
+        private OrderDTO order;
+        private InvoiceDetailDTO invoice; // null when QR (pending payment)
+        private boolean requiresPaymentConfirmation; // true for QR
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // POST /api/pos/checkout
+    // ═════════════════════════════════════════════════════════════════════════
+
     @PostMapping("/checkout")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<InvoiceDetailDTO> checkoutPOS(
+    public ResponseEntity<POSCheckoutResponse> checkoutPOS(
             @Valid @RequestBody POSCheckoutRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        // ── Validate cash received ─────────────────────────────────────────
         PaymentMethod payMethod = request.getPaymentMethod() != null
             ? request.getPaymentMethod() : PaymentMethod.COD;
 
@@ -56,11 +79,21 @@ public class POSController {
         ));
         orderReq.setPaymentMethod(payMethod);
 
-        // ── Create order (atomic: createOrder → confirmOrder → DELIVERED) ─
+        // ── QR Flow: chỉ tạo order, chờ xác nhận thanh toán ──────────────
+        if (payMethod == PaymentMethod.QR) {
+            OrderDTO pendingOrder = orderService.createOrder(orderReq, userDetails.getUser().getId());
+            return ResponseEntity.ok(POSCheckoutResponse.builder()
+                .order(pendingOrder)
+                .invoice(null)
+                .requiresPaymentConfirmation(true)
+                .build());
+        }
+
+        // ── COD Flow: atomic checkout (createOrder → confirmOrder → DELIVERED) ─
         OrderDTO completedOrder = orderService.createAndCompleteOrder(
             orderReq, userDetails.getUser().getId());
 
-        // ── Validate cash after we know the total ─────────────────────────
+        // ── Validate cash ─────────────────────────────────────────────────
         if (payMethod == PaymentMethod.COD) {
             BigDecimal cash = request.getCashReceived();
             if (cash == null || cash.compareTo(completedOrder.getGrandTotal()) < 0) {
@@ -69,12 +102,10 @@ public class POSController {
             }
         }
 
-        // ── Create Invoice ─────────────────────────────────────────────────
-        // NOTE: getUsername() returns UUID (see CustomUserDetails) — use email as fallback
+        // ── Create Invoice ────────────────────────────────────────────────
         User staff = userDetails.getUser();
         String staffName = (staff.getName() != null && !staff.getName().isBlank())
-            ? staff.getName()
-            : staff.getEmail(); // email is never null per DB constraint
+            ? staff.getName() : staff.getEmail();
 
         InvoiceDetailDTO invoice = invoiceService.createFromOrder(
             completedOrder,
@@ -84,23 +115,51 @@ public class POSController {
             payMethod
         );
 
+        return ResponseEntity.ok(POSCheckoutResponse.builder()
+            .order(completedOrder)
+            .invoice(invoice)
+            .requiresPaymentConfirmation(false)
+            .build());
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // POST /api/pos/confirm-payment/{orderId}
+    // Nhân viên xác nhận khách đã chuyển khoản QR thành công
+    // ═════════════════════════════════════════════════════════════════════════
+
+    @PostMapping("/confirm-payment/{orderId}")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<InvoiceDetailDTO> confirmQRPayment(
+            @PathVariable UUID orderId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        // 1. Validate order exists and is still pending payment
+        OrderDTO order = orderService.getOrderById(orderId);
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new BusinessRuleViolationException("Đơn hàng này đã được thanh toán.");
+        }
+
+        // 2. Confirm → DELIVERED (consume stock, mark paid)
+        orderService.confirmOrder(orderId);
+        OrderDTO completedOrder = orderService.changeOrderStatus(orderId, "DELIVERED");
+
+        // 3. Create Invoice
+        User staff = userDetails.getUser();
+        String staffName = (staff.getName() != null && !staff.getName().isBlank())
+            ? staff.getName() : staff.getEmail();
+
+        InvoiceDetailDTO invoice = invoiceService.createFromOrder(
+            completedOrder,
+            staff.getId(),
+            staffName,
+            completedOrder.getGrandTotal(), // QR: cash = exact total
+            PaymentMethod.QR
+        );
+
         return ResponseEntity.ok(invoice);
     }
 
     private String safeStr(String value, String fallback) {
         return (value != null && !value.isBlank()) ? value : fallback;
-    }
-
-    // ── Inner request DTO ──────────────────────────────────────────────────
-    @lombok.Data
-    public static class POSCheckoutRequest {
-        @jakarta.validation.Valid
-        @jakarta.validation.constraints.NotEmpty(message = "Giỏ hàng không được trống")
-        private java.util.List<secure_shop.backend.dto.order.request.OrderItemRequest> items;
-
-        private PaymentMethod paymentMethod;
-
-        /** Tiền khách đưa (bắt buộc khi paymentMethod=COD) */
-        private BigDecimal cashReceived;
     }
 }

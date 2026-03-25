@@ -44,7 +44,7 @@ public class Category {
 
     @Size(max = 500, message = "Đường dẫn ảnh quá dài (tối đa 500 ký tự)")
     @Pattern(
-            regexp = "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/.*)?$",
+            regexp = "^(|https?:\\/\\/.*|\\/.*|.*\\.(jpg|jpeg|png|gif|webp|svg|bmp))$",
             message = "URL ảnh danh mục không hợp lệ"
     )
     @Column(length = 500)

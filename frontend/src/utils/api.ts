@@ -592,7 +592,11 @@ export const posApi = {
     cashReceived?: number;
   }) => {
     const response = await api.post("/pos/checkout", data);
-    return response.data;
+    return response.data; // POSCheckoutResponse { order, invoice, requiresPaymentConfirmation }
+  },
+  confirmPayment: async (orderId: string) => {
+    const response = await api.post(`/pos/confirm-payment/${orderId}`);
+    return response.data; // InvoiceDetailDTO
   },
 };
 

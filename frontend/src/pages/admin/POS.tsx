@@ -4,7 +4,6 @@ import {
     Trash2,
     Plus,
     Minus,
-    CreditCard,
     Banknote,
     QrCode,
     Search,
@@ -16,7 +15,10 @@ import {
     ChevronRight,
     Package2,
     LayoutGrid,
+    Clock,
+    Loader2,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import { posApi, productApi, invoiceApi, categoryApi } from "../../utils/api";
 import type { ProductSummary, CategorySummary } from "../../types/types";
 
@@ -49,7 +51,7 @@ interface Invoice {
     items: InvoiceItem[];
 }
 
-type PayMethod = "COD" | "CARD" | "E_WALLET";
+type PayMethod = "COD" | "QR";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 const vnd = (n: number) =>
@@ -59,7 +61,114 @@ const vnd = (n: number) =>
     }).format(n);
 
 const payLabel = (m: string) =>
-    m === "COD" ? "Tiền mặt" : m === "E_WALLET" ? "VNPay/QR" : "Thẻ";
+    m === "COD" ? "Tiền mặt" : m === "QR" ? "QR Ngân hàng" : m;
+
+const VIETQR_IMAGE = "https://res.cloudinary.com/dlkh28yfs/image/upload/v1774438784/VietQr-_wkxvb3.png";
+
+// ─── QR Payment Modal ───────────────────────────────────────────────────────
+const QRPaymentModal: React.FC<{
+    orderId: string;
+    totalAmount: number;
+    onConfirmed: (invoice: Invoice) => void;
+    onCancel: () => void;
+}> = ({ orderId, totalAmount, onConfirmed, onCancel }) => {
+    const [confirming, setConfirming] = useState(false);
+
+    const handleConfirm = async () => {
+        setConfirming(true);
+        try {
+            const invoice: Invoice = await posApi.confirmPayment(orderId);
+            toast.success("Thanh toán QR thành công!");
+            onConfirmed(invoice);
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Lỗi xác nhận thanh toán.";
+            toast.error(msg);
+        } finally {
+            setConfirming(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+            <div className="absolute inset-0" onClick={onCancel} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="h-1.5 bg-gradient-to-r from-violet-600 to-cyan-500" />
+                <div className="px-8 py-7">
+                    <button
+                        onClick={onCancel}
+                        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+
+                    {/* Header */}
+                    <div className="text-center mb-5">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 bg-gradient-to-br from-violet-600 to-cyan-500 shadow-lg shadow-violet-200">
+                            <QrCode className="w-6 h-6 text-white" />
+                        </div>
+                        <h2 className="text-xl font-black text-slate-900">Thanh toán QR</h2>
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                            <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
+                            <span className="text-sm font-semibold text-amber-600">Đang chờ thanh toán...</span>
+                        </div>
+                    </div>
+
+                    {/* Order Info */}
+                    <div className="bg-slate-50 rounded-lg p-4 mb-5 space-y-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-500">Mã đơn hàng</span>
+                            <span className="font-mono font-bold text-slate-800">{orderId.slice(0, 8).toUpperCase()}</span>
+                        </div>
+                        <div className="flex justify-between items-end">
+                            <span className="text-slate-500 text-sm">Tổng thanh toán</span>
+                            <span className="text-2xl font-black text-violet-600">{vnd(totalAmount)}</span>
+                        </div>
+                    </div>
+
+                    {/* QR Image */}
+                    <div className="flex justify-center mb-5">
+                        <div className="border-2 border-dashed border-violet-200 rounded-xl p-3 bg-violet-50/50">
+                            <img
+                                src={VIETQR_IMAGE}
+                                alt="VietQR - Quét để chuyển khoản"
+                                className="w-64 h-64 object-contain rounded-lg"
+                            />
+                        </div>
+                    </div>
+
+                    <p className="text-center text-xs text-slate-400 mb-5">
+                        Mở app ngân hàng → Quét mã QR → Nhập số tiền → Chuyển khoản
+                    </p>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleConfirm}
+                            disabled={confirming}
+                            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl font-bold text-sm text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:opacity-90 transition-opacity shadow-md shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {confirming ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-5 h-5" />
+                                    Đã thanh toán
+                                </>
+                            )}
+                        </button>
+                        <button
+                            onClick={onCancel}
+                            disabled={confirming}
+                            className="flex-1 h-12 rounded-xl font-bold text-sm text-slate-600 border-2 border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 // ─── Receipt Modal ──────────────────────────────────────────────────────────────
 const ReceiptModal: React.FC<{
@@ -275,6 +384,9 @@ const POS: React.FC = () => {
     const [receipt, setReceipt] = useState<Invoice | null>(null);
     const [showCancel, setShowCancel] = useState(false);
 
+    // QR Payment
+    const [qrOrder, setQrOrder] = useState<{ orderId: string; totalAmount: number } | null>(null);
+
     // Barcode
     const [barcode, setBarcode] = useState("");
     const [scanning, setScanning] = useState(false);
@@ -407,24 +519,34 @@ const POS: React.FC = () => {
     const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
     const cashNum = parseFloat(cashInput.replace(/[^0-9]/g, "")) || 0;
     const change = Math.max(0, cashNum - totalPrice);
-    const cashOk = payMethod !== "COD" || cashNum >= totalPrice;
+    const cashOk = payMethod === "QR" || cashNum >= totalPrice;
 
     // ── Checkout ─────────────────────────────────────────────────────────────────
     const handleCheckout = async () => {
         if (!cart.length || checking || !cashOk) return;
         setChecking(true);
         try {
-            const inv: Invoice = await posApi.checkout({
+            const res = await posApi.checkout({
                 items: cart.map((i) => ({
                     productId: i.product.id,
                     quantity: i.quantity,
                 })),
                 paymentMethod: payMethod,
-                cashReceived: payMethod === "COD" ? cashNum : totalPrice,
+                cashReceived: payMethod === "COD" ? cashNum : undefined,
             });
-            setCart([]);
-            setCashInput("");
-            setReceipt(inv);
+
+            if (res.requiresPaymentConfirmation) {
+                // QR flow: show QR modal, keep cart until payment confirmed
+                setQrOrder({
+                    orderId: res.order.id,
+                    totalAmount: res.order.grandTotal,
+                });
+            } else {
+                // COD flow: invoice ready immediately
+                setCart([]);
+                setCashInput("");
+                setReceipt(res.invoice);
+            }
         } catch (err: unknown) {
             const msg =
                 (err as { response?: { data?: { message?: string } } })?.response
@@ -479,6 +601,19 @@ const POS: React.FC = () => {
                         barcodeRef.current?.focus();
                     }}
                     onPdf={() => invoiceApi.downloadPdf(receipt.id, receipt.invoiceCode)}
+                />
+            )}
+            {qrOrder && (
+                <QRPaymentModal
+                    orderId={qrOrder.orderId}
+                    totalAmount={qrOrder.totalAmount}
+                    onConfirmed={(invoice) => {
+                        setQrOrder(null);
+                        setCart([]);
+                        setCashInput("");
+                        setReceipt(invoice);
+                    }}
+                    onCancel={() => setQrOrder(null)}
                 />
             )}
             {showCancel && (
@@ -779,8 +914,7 @@ const POS: React.FC = () => {
                         <div className="flex gap-2 mb-4">
                             {[
                                 { v: "COD", label: "Tiền mặt", Icon: Banknote },
-                                { v: "CARD", label: "Quẹt Thẻ", Icon: CreditCard },
-                                { v: "E_WALLET", label: "Mã QR", Icon: QrCode },
+                                { v: "QR", label: "QR Ngân hàng", Icon: QrCode },
                             ].map(({ v, label, Icon }) => {
                                 const active = payMethod === v;
                                 return (

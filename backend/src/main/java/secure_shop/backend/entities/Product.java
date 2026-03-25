@@ -37,7 +37,7 @@ public class Product extends BaseEntity {
 
     @NotBlank(message = "Tên sản phẩm không được để trống")
     @Size(max = 255, message = "Tên sản phẩm tối đa 255 ký tự")
-    @Pattern(regexp = "^[\\p{L}0-9 .,'&\\-()]+$", message = "Tên sản phẩm chỉ được chứa chữ cái, số và các ký tự hợp lệ như . , ' & - ( )")
+    @Pattern(regexp = "^[\\p{L}0-9 .,'\"&\\-()_/+%\\[\\]!?:;*#@]+$", message = "Tên sản phẩm chứa ký tự không hợp lệ")
     @Column(nullable = false, length = 500)
     private String name;
 
