@@ -76,8 +76,8 @@ public class ProductMapper {
                 .thumbnailUrl(p.getThumbnailUrl())
                 .brand(p.getBrand() != null ? brandMapper.toDTO(p.getBrand()) : null)
                 .category(p.getCategory() != null ? categoryMapper.toSummaryDTO(p.getCategory()) : null)
-                .availableStock(p.getInventory().getOnHand() - p.getInventory().getReserved())
-                .inStock(p.getInventory().getOnHand() > p.getInventory().getReserved())
+                .availableStock(p.getInventory() != null ? p.getInventory().getOnHand() - p.getInventory().getReserved() : 0)
+                .inStock(p.getInventory() != null && p.getInventory().getOnHand() > p.getInventory().getReserved())
                 .rating(p.getRating())
                 .reviewCount(p.getReviewCount())
                 .build();

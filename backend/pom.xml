@@ -136,6 +136,17 @@
             <artifactId>openpdf</artifactId>
             <version>1.3.43</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
+		<!-- Cloudinary cho xử lý hình ảnh -->
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http44</artifactId>
+			<version>1.36.0</version>
+		</dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

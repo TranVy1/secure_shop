@@ -23,7 +23,7 @@ class ImageUploadService {
       });
 
       return {
-        url: `http://localhost:8090${response.data.url}`, // Full URL for display
+        url: `${response.data.url}`, // Full URL for display
         path: response.data.path,
       };
     } catch (error: any) {

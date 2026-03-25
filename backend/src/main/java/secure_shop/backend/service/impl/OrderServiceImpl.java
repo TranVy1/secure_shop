@@ -172,8 +172,9 @@ public class OrderServiceImpl implements OrderService {
             discountRepository.save(discount);
         }
 
-        if (request.getPaymentMethod() == null ||
-                request.getPaymentMethod() == PaymentMethod.COD) {
+        boolean isPos = request.getShippingAddress() != null && "In-Store".equals(request.getShippingAddress().get("type"));
+        if (!isPos && (request.getPaymentMethod() == null ||
+                request.getPaymentMethod() == PaymentMethod.COD)) {
             try {
                 emailService.sendOrderConfirmationEmail(savedOrder);
             } catch (Exception ex) {
@@ -471,11 +472,14 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
             
-            // Send thank you email
-            try {
-                emailService.sendThankYouEmail(order);
-            } catch (Exception e) {
-                // Log and ignore email error
+            // Send thank you email only if not POS
+            boolean isPos = order.getShippingAddress() != null && "In-Store".equals(order.getShippingAddress().get("type"));
+            if (!isPos) {
+                try {
+                    emailService.sendThankYouEmail(order);
+                } catch (Exception e) {
+                    // Log and ignore email error
+                }
             }
         }
 

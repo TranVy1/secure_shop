@@ -314,7 +314,7 @@ public class SecurityConfig {
                 configuration.setAllowCredentials(true);
 
                 // Exposed headers
-                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie"));
+                configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "Content-Disposition"));
 
                 // Cache preflight for 1 hour
                 configuration.setMaxAge(3600L);

@@ -23,17 +23,14 @@ public class MediaAsset {
     @NotBlank(message = "URL ảnh không được để trống")
     @Size(max = 2048, message = "URL ảnh quá dài (tối đa 2048 ký tự)")
     @Pattern(
-            regexp = "^(https?:\\/\\/)?([\\w\\-]+\\.)+[\\w\\-]+(\\/.*)?$",
+            regexp = "^(https?:\\/\\/.*|\\/.*|.*\\.(jpg|jpeg|png|gif|webp|svg|bmp))$",
             message = "Đường dẫn URL ảnh không hợp lệ"
     )
     @Column(nullable = false)
     private String url;
 
     @Size(max = 255, message = "Văn bản thay thế (alt text) tối đa 255 ký tự")
-    @Pattern(
-            regexp = "^[\\p{L}0-9 ,.\\-_'\"!?()]*$",
-            message = "Văn bản thay thế chỉ được chứa chữ, số và ký tự hợp lệ"
-    )
+    @Pattern(regexp = "^.*$", message = "Văn bản thay thế không hợp lệ")
     private String altText;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
