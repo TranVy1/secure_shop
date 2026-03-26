@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { orderApi, ReviewApi } from "../utils/api";
 import { toast } from "react-toastify";
 import { Star, X } from "lucide-react";
@@ -375,12 +375,12 @@ export default function OrderDetail() {
           </div>
         </div>
       </div>
-      <div className="pt-2">
-        <Link to="/orders" className="group inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition">
-          <svg className="w-4 h-4 -translate-x-0.5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-          Quay lại danh sách đơn
-        </Link>
-      </div>
+      {/*<div className="pt-2">*/}
+      {/*  <Link to="/orders" className="group inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition">*/}
+      {/*    <svg className="w-4 h-4 -translate-x-0.5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>*/}
+      {/*    Quay lại danh sách đơn*/}
+      {/*  </Link>*/}
+      {/*</div>*/}
 
       {/* Review Modal */}
       {showReviewModal && selectedItem && (
@@ -509,12 +509,50 @@ function formatAddress(addr?: Record<string, string> | string) {
 }
 
 function BackLink() {
-  return (
-    <Link to="/orders" className="group inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition">
-      <svg className="w-4 h-4 -translate-x-0.5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      <span>Quay lại</span>
-    </Link>
-  );
+    const navigate = useNavigate();
+    const location = useLocation() as { state?: any };
+
+    const handleBack = () => {
+        sessionStorage.setItem("order_scroll", String(window.scrollY));
+
+        // Lấy state đúng cách từ react-router
+        const backTo = location.state?.backTo;
+        const fromProfileOrders = location.state?.fromProfileOrders === true;
+
+        if (backTo === 'profile-orders' || fromProfileOrders) {
+            navigate('/profile', { state: { tab: 'orders' }, replace: true });
+            return;
+        }
+
+        // fallback: nếu có history thì back, nếu không thì về Profile(tab orders)
+        if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/profile', { state: { tab: 'orders' }, replace: true });
+        }
+    };
+
+    useEffect(() => {
+        const scrollY = sessionStorage.getItem("order_scroll");
+        if (scrollY) {
+            requestAnimationFrame(() => {
+                window.scrollTo({ top: parseInt(scrollY, 10), behavior: "instant" as ScrollBehavior });
+            });
+            sessionStorage.removeItem("order_scroll");
+        }
+    }, []);
+
+    return (
+        <button
+            onClick={handleBack}
+            className="group inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition"
+        >
+            <svg className="w-4 h-4 -translate-x-0.5 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Quay lại</span>
+        </button>
+    );
 }
 
 function StatusBadge({ value }: { value?: string }) {
