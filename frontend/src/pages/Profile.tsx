@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { logout, restoreAuthSuccess } from '../stores/authSlice';
 import { toast } from 'react-toastify';
@@ -48,6 +48,7 @@ interface Ticket {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // bỏ ép kiểu { state?: any }
   const [activeTab, setActiveTab] = useState('account');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -95,6 +96,17 @@ const Profile: React.FC = () => {
 
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+
+  // Đọc tab gửi kèm từ điều hướng (vd: { state: { tab: 'orders' } })
+  useEffect(() => {
+    const state = (location as any).state; // đọc state an toàn
+    const desiredTab = state?.tab as string | undefined;
+    if (desiredTab) {
+      setActiveTab(desiredTab);
+      // dùng location.pathname hợp lệ từ Location
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -683,7 +695,7 @@ const Profile: React.FC = () => {
                       <p className="text-sm text-gray-500 mt-1">
                         Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')} {new Date(order.createdAt).toLocaleTimeString('vi-VN')}
                       </p>
-                      
+
                       <div className="mt-3 text-sm flex gap-3">
                         <div>
                           <span className="font-medium mr-1 text-gray-600">Trạng thái:</span>
@@ -712,13 +724,15 @@ const Profile: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4 sm:mt-0 text-left sm:text-right flex flex-col justify-end items-start sm:items-end">
                       <p className="text-lg font-bold text-red-500 mb-3">
                         {order.grandTotal ? order.grandTotal.toLocaleString('vi-VN') : '0'} ₫
                       </p>
                       <button
-                        onClick={() => navigate(`/orders/${order.id}`)}
+                            onClick={() =>
+                                navigate(`/orders/${order.id}`, { state: { backTo: 'profile-orders' } })
+                            }
                         className="px-4 py-1.5 border border-purple-600 text-purple-600 font-medium rounded hover:bg-purple-50 transition-colors text-sm"
                       >
                         Xem chi tiết
