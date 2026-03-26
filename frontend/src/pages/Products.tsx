@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
-import {
-  Filter,
-  Search,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Filter, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cartService } from "../utils/cartService";
 import type { Brand, CategorySummary, ProductSummary } from "../types/types";
@@ -31,6 +27,10 @@ const Products: React.FC = () => {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(keyword || "");
+  const [searchInput, setSearchInput] = useState(keyword || "");
+  const [searchMode, setSearchMode] = useState<"realtime" | "manual">(
+    "realtime",
+  );
   const [selectedCategory, setSelectedCategory] = useState(() => {
     const param = searchParams.get("category");
     return param ? parseInt(param) : 0;
@@ -104,7 +104,7 @@ const Products: React.FC = () => {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [pageSize]
+    [pageSize],
   );
 
   const fetchFilters = async () => {
@@ -120,9 +120,33 @@ const Products: React.FC = () => {
         ]);
         setBrands([{ id: 0, name: "Tất cả" }, ...(brandsRes?.content ?? [])]);
       })
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setLoadingFilters(false));
   }, []);
+
+  // === Debounced search ===
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchMode === "realtime") {
+        setSearchTerm(searchInput);
+        setPage(0);
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchInput, searchMode]);
+
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
+    setPage(0);
+    setSearchMode("manual");
+  };
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+    setSearchMode("realtime");
+  };
 
   // === Load products (debounce + abort) ===
   useEffect(() => {
@@ -164,7 +188,7 @@ const Products: React.FC = () => {
 
         fetchProducts(params, abortController.signal);
       },
-      150 // Reduced delay to 150ms to make it feel real-time
+      300, // Increased delay to 300ms
     );
 
     return () => {
@@ -208,7 +232,7 @@ const Products: React.FC = () => {
   };
 
   const handleStockFilterChange = (
-    filter: "all" | "inStock" | "outOfStock"
+    filter: "all" | "inStock" | "outOfStock",
   ) => {
     setStockFilter(filter);
     setPage(0);
@@ -251,29 +275,35 @@ const Products: React.FC = () => {
           {/* Top Categories / Brands Scrollable Bar */}
           <div className="bg-white rounded-[2px] shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] p-4 mb-4 hidden lg:block border border-gray-100">
             <div className="flex items-start text-gray-700 text-[14px]">
-              <span className="w-[120px] shrink-0 font-semibold mt-1">Thương hiệu</span>
+              <span className="w-[120px] shrink-0 font-semibold mt-1">
+                Thương hiệu
+              </span>
               <div className="flex flex-wrap gap-2 flex-1">
                 <button
                   onClick={() => handleBrandChange(0)}
-                  className={`px-4 py-1 rounded-[2px] text-[13px] border transition-colors shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] ${selectedBrand === 0
-                    ? "bg-[#ee4d2d] text-white border-[#ee4d2d] font-medium"
-                    : "bg-white border-transparent hover:border-[#ee4d2d] text-gray-700 hover:text-[#ee4d2d]"
-                    }`}
+                  className={`px-4 py-1 rounded-[2px] text-[13px] border transition-colors shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] ${
+                    selectedBrand === 0
+                      ? "bg-[#ee4d2d] text-white border-[#ee4d2d] font-medium"
+                      : "bg-white border-transparent hover:border-[#ee4d2d] text-gray-700 hover:text-[#ee4d2d]"
+                  }`}
                 >
                   Tất cả
                 </button>
-                {brands.filter(b => b.id !== 0).map(brand => (
-                  <button
-                    key={brand.id}
-                    onClick={() => handleBrandChange(brand.id)}
-                    className={`px-4 py-1 rounded-[2px] text-[13px] border transition-colors shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] ${selectedBrand === brand.id
-                      ? "bg-[#ee4d2d] text-white border-[#ee4d2d] font-medium"
-                      : "bg-white border-transparent hover:border-[#ee4d2d] text-gray-700 hover:text-[#ee4d2d]"
+                {brands
+                  .filter((b) => b.id !== 0)
+                  .map((brand) => (
+                    <button
+                      key={brand.id}
+                      onClick={() => handleBrandChange(brand.id)}
+                      className={`px-4 py-1 rounded-[2px] text-[13px] border transition-colors shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] ${
+                        selectedBrand === brand.id
+                          ? "bg-[#ee4d2d] text-white border-[#ee4d2d] font-medium"
+                          : "bg-white border-transparent hover:border-[#ee4d2d] text-gray-700 hover:text-[#ee4d2d]"
                       }`}
-                  >
-                    {brand.name}
-                  </button>
-                ))}
+                    >
+                      {brand.name}
+                    </button>
+                  ))}
               </div>
             </div>
           </div>
@@ -282,8 +312,9 @@ const Products: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar Filters with Scrollbar */}
             <aside
-              className={`w-full lg:w-[220px] shrink-0 ${showFilters ? "block" : "hidden lg:block"
-                }`}
+              className={`w-full lg:w-[220px] shrink-0 ${
+                showFilters ? "block" : "hidden lg:block"
+              }`}
             >
               <div className="bg-white rounded-[2px] border border-gray-100 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)] sticky top-[72px] max-h-[calc(100vh-80px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                 <div className="p-4 space-y-5">
@@ -310,10 +341,11 @@ const Products: React.FC = () => {
                             <button
                               key={category.id}
                               onClick={() => handleCategoryChange(category.id)}
-                              className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${selectedCategory === category.id
-                                ? "text-[#ee4d2d] font-medium bg-red-50"
-                                : "text-gray-600 hover:text-[#ee4d2d]"
-                                }`}
+                              className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
+                                selectedCategory === category.id
+                                  ? "text-[#ee4d2d] font-medium bg-red-50"
+                                  : "text-gray-600 hover:text-[#ee4d2d]"
+                              }`}
                             >
                               {category.name}
                             </button>
@@ -400,28 +432,31 @@ const Products: React.FC = () => {
                     <div className="space-y-2">
                       <button
                         onClick={() => handleStockFilterChange("all")}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${stockFilter === "all"
-                          ? "text-[#ee4d2d] font-medium bg-red-50"
-                          : "text-gray-600 hover:text-[#ee4d2d]"
-                          }`}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
+                          stockFilter === "all"
+                            ? "text-[#ee4d2d] font-medium bg-red-50"
+                            : "text-gray-600 hover:text-[#ee4d2d]"
+                        }`}
                       >
                         Tất cả
                       </button>
                       <button
                         onClick={() => handleStockFilterChange("inStock")}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${stockFilter === "inStock"
-                          ? "text-[#ee4d2d] font-medium bg-red-50"
-                          : "text-gray-600 hover:text-[#ee4d2d]"
-                          }`}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
+                          stockFilter === "inStock"
+                            ? "text-[#ee4d2d] font-medium bg-red-50"
+                            : "text-gray-600 hover:text-[#ee4d2d]"
+                        }`}
                       >
                         Còn hàng
                       </button>
                       <button
                         onClick={() => handleStockFilterChange("outOfStock")}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${stockFilter === "outOfStock"
-                          ? "text-[#ee4d2d] font-medium bg-red-50"
-                          : "text-gray-600 hover:text-[#ee4d2d]"
-                          }`}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
+                          stockFilter === "outOfStock"
+                            ? "text-[#ee4d2d] font-medium bg-red-50"
+                            : "text-gray-600 hover:text-[#ee4d2d]"
+                        }`}
                       >
                         Hết hàng
                       </button>
@@ -433,6 +468,95 @@ const Products: React.FC = () => {
 
             {/* Products Grid */}
             <div className="flex-1">
+              {/* Filter and Sort Bar - Static */}
+              <div className="sticky top-16 z-40 bg-[#ededed] shadow-sm rounded-[2px] p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm transition-all duration-300">
+                <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pb-1 sm:pb-0">
+                  <span className="text-gray-600 whitespace-nowrap hidden sm:inline">
+                    Sắp xếp theo
+                  </span>
+                  <button
+                    onClick={() => {
+                      setSortBy("name");
+                      setPage(0);
+                    }}
+                    className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "name" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
+                  >
+                    Phổ biến
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy("rating");
+                      setPage(0);
+                    }}
+                    className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "rating" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
+                  >
+                    Đánh giá cao
+                  </button>
+
+                  <div className="relative group min-w-[150px] shadow-sm">
+                    <select
+                      value={sortBy.startsWith("price") ? sortBy : ""}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setSortBy(e.target.value);
+                          setPage(0);
+                        }
+                      }}
+                      className={`w-full px-4 py-2 rounded-[2px] appearance-none cursor-pointer outline-none ${sortBy.startsWith("price") ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800"}`}
+                    >
+                      <option
+                        value=""
+                        disabled
+                        className="text-gray-800 bg-white"
+                      >
+                        Giá
+                      </option>
+                      <option
+                        value="price-low"
+                        className="text-gray-800 bg-white"
+                      >
+                        Giá: Thấp đến Cao
+                      </option>
+                      <option
+                        value="price-high"
+                        className="text-gray-800 bg-white"
+                      >
+                        Giá: Cao đến Thấp
+                      </option>
+                    </select>
+                    <div
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${sortBy.startsWith("price") ? "text-white" : "text-gray-500"}`}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Search box and Mobile Filter Toggle */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <form
+                    onSubmit={handleSearchSubmit}
+                    className="relative flex-1 sm:w-56 shadow-sm"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm..."
+                      value={searchInput}
+                      onChange={handleSearchChange}
+                      className="w-full pl-8 pr-3 py-2 border-none rounded-[2px] focus:ring-1 focus:ring-[#ee4d2d] outline-none text-[13px]"
+                    />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  </form>
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="lg:hidden flex items-center justify-center p-2 bg-white rounded-[2px] shadow-sm text-gray-700"
+                  >
+                    <Filter className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Products List - Dynamic */}
               <AnimatePresence mode="wait">
                 {loading ? (
                   <motion.div
@@ -449,71 +573,12 @@ const Products: React.FC = () => {
                   </motion.div>
                 ) : (
                   <motion.div
-                    key={`${selectedCategory}-${page}-${sortBy}-${searchTerm}-${minPrice}-${maxPrice}-${stockFilter}`}
+                    key={`${selectedCategory}-${page}-${sortBy}-${minPrice}-${maxPrice}-${stockFilter}`}
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -15 }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
                   >
-                    {/* Filter and Sort Bar */}
-                    <div className="sticky top-16 z-40 bg-[#ededed] shadow-sm rounded-[2px] p-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm transition-all duration-300">
-                      <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pb-1 sm:pb-0">
-                        <span className="text-gray-600 whitespace-nowrap hidden sm:inline">Sắp xếp theo</span>
-                        <button
-                          onClick={() => { setSortBy("name"); setPage(0); }}
-                          className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "name" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
-                        >
-                          Phổ biến
-                        </button>
-                        <button
-                          onClick={() => { setSortBy("rating"); setPage(0); }}
-                          className={`px-4 py-2 rounded-[2px] whitespace-nowrap shadow-sm ${sortBy === "rating" ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800 hover:bg-gray-50"}`}
-                        >
-                          Đánh giá cao
-                        </button>
-
-                        <div className="relative group min-w-[150px] shadow-sm">
-                          <select
-                            value={sortBy.startsWith("price") ? sortBy : ""}
-                            onChange={(e) => {
-                              if (e.target.value) { setSortBy(e.target.value); setPage(0); }
-                            }}
-                            className={`w-full px-4 py-2 rounded-[2px] appearance-none cursor-pointer outline-none ${sortBy.startsWith("price") ? "bg-[#ee4d2d] text-white" : "bg-white text-gray-800"}`}
-                          >
-                            <option value="" disabled className="text-gray-800 bg-white">Giá</option>
-                            <option value="price-low" className="text-gray-800 bg-white">Giá: Thấp đến Cao</option>
-                            <option value="price-high" className="text-gray-800 bg-white">Giá: Cao đến Thấp</option>
-                          </select>
-                          <div className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${sortBy.startsWith("price") ? "text-white" : "text-gray-500"}`}>
-                            <ChevronDown className="w-4 h-4" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Search box and Mobile Filter Toggle */}
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <div className="relative flex-1 sm:w-56 shadow-sm">
-                          <input
-                            type="text"
-                            placeholder="Tìm kiếm..."
-                            value={searchTerm}
-                            onChange={(e) => {
-                              setSearchTerm(e.target.value);
-                              setPage(0);
-                            }}
-                            className="w-full pl-8 pr-3 py-2 border-none rounded-[2px] focus:ring-1 focus:ring-[#ee4d2d] outline-none text-[13px]"
-                          />
-                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        </div>
-                        <button
-                          onClick={() => setShowFilters(!showFilters)}
-                          className="lg:hidden flex items-center justify-center p-2 bg-white rounded-[2px] shadow-sm text-gray-700"
-                        >
-                          <Filter className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-
                     {products.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">
@@ -523,17 +588,21 @@ const Products: React.FC = () => {
                     ) : (
                       <>
                         <div
-                          className={`grid gap-2 sm:gap-3 ${viewMode === "grid"
-                            ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                            : "grid-cols-1"
-                            }`}
+                          className={`grid gap-2 sm:gap-3 ${
+                            viewMode === "grid"
+                              ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                              : "grid-cols-1"
+                          }`}
                         >
                           {products.map((product, index) => (
                             <motion.div
                               key={product.id}
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.3, delay: index * 0.05 }}
+                              transition={{
+                                duration: 0.3,
+                                delay: index * 0.05,
+                              }}
                             >
                               <ProductCard
                                 product={product}
