@@ -3,15 +3,13 @@ import { motion } from "framer-motion";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Link, useLocation } from "react-router-dom";
-import { productApi, PaymentApi } from "../utils/api";
-import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
+import { productApi } from "../utils/api";
 import type { ProductSummary } from "../types/types";
 import ProductCard from "../components/ProductCard";
 import { cartService } from "../utils/cartService";
 
 const OrderSuccess: React.FC = () => {
-  const location = useLocation();
   const [products, setProducts] = useState<ProductSummary[]>([]);
 
   // Fetch sản phẩm từ API thật

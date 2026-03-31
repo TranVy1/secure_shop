@@ -650,3 +650,149 @@ export const invoiceApi = {
   },
 };
 
+// ==== NEW: Product Variant API ====
+export const productVariantApi = {
+  // Create variant for a product
+  create: async (productId: string, data: any) => {
+    const response = await api.post(`/product-variants/product/${productId}`, data);
+    return response.data;
+  },
+  // Get single variant
+  getById: async (variantId: string) => {
+    const response = await api.get(`/product-variants/${variantId}`);
+    return response.data;
+  },
+  // Get all variants for a product
+  getByProduct: async (productId: string) => {
+    const response = await api.get(`/product-variants/product/${productId}`);
+    return response.data;
+  },
+  // Get variant types for a product
+  getTypes: async (productId: string) => {
+    const response = await api.get(`/product-variants/product/${productId}/types`);
+    return response.data;
+  },
+  // Update variant
+  update: async (variantId: string, data: any) => {
+    const response = await api.put(`/product-variants/${variantId}`, data);
+    return response.data;
+  },
+  // Delete variant
+  delete: async (variantId: string) => {
+    await api.delete(`/product-variants/${variantId}`);
+  },
+};
+
+// ==== NEW: Product Color API ====
+export const productColorApi = {
+  // Create color for a product
+  create: async (productId: string, data: any) => {
+    const response = await api.post(`/product-colors/product/${productId}`, data);
+    return response.data;
+  },
+  // Get single color
+  getById: async (colorId: string) => {
+    const response = await api.get(`/product-colors/${colorId}`);
+    return response.data;
+  },
+  // Get all colors for a product
+  getByProduct: async (productId: string) => {
+    const response = await api.get(`/product-colors/product/${productId}`);
+    return response.data;
+  },
+  // Update color
+  update: async (colorId: string, data: any) => {
+    const response = await api.put(`/product-colors/${colorId}`, data);
+    return response.data;
+  },
+  // Delete color
+  delete: async (colorId: string) => {
+    await api.delete(`/product-colors/${colorId}`);
+  },
+};
+
+// ==== NEW: Product Attribute API ====
+export const productAttributeApi = {
+  // Create attribute for a product
+  create: async (productId: string, data: any) => {
+    const response = await api.post(`/product-attributes/product/${productId}`, data);
+    return response.data;
+  },
+  // Get single attribute
+  getById: async (attributeId: string) => {
+    const response = await api.get(`/product-attributes/${attributeId}`);
+    return response.data;
+  },
+  // Get all attributes for a product
+  getByProduct: async (productId: string) => {
+    const response = await api.get(`/product-attributes/product/${productId}`);
+    return response.data;
+  },
+  // Get attributes for a variant
+  getByVariant: async (variantId: string) => {
+    const response = await api.get(`/product-attributes/variant/${variantId}`);
+    return response.data;
+  },
+  // Update attribute
+  update: async (attributeId: string, data: any) => {
+    const response = await api.put(`/product-attributes/${attributeId}`, data);
+    return response.data;
+  },
+  // Delete attribute
+  delete: async (attributeId: string) => {
+    await api.delete(`/product-attributes/${attributeId}`);
+  },
+};
+
+// ==== NEW: Inventory Unit (IMEI Management) API ====
+export const inventoryUnitApi = {
+  // Bulk import IMEIs
+  bulkImport: async (data: {
+    variantId: string;
+    colorId?: string;
+    imeiList: string[];
+  }) => {
+    const response = await api.post("/inventory-units/bulk-import", data);
+    return response.data;
+  },
+  // Auto-generate IMEI range
+  generateRange: async (data: {
+    variantId: string;
+    prefix: string;
+    startSequence: number;
+    quantity: number;
+  }) => {
+    const response = await api.post("/inventory-units/generate-range", data);
+    return response.data;
+  },
+  // Get available IMEIs for a variant
+  getAvailable: async (variantId: string) => {
+    const response = await api.get(`/inventory-units/variant/${variantId}/imeis`);
+    return response.data;
+  },
+  // Get by IMEI serial
+  getByImei: async (imeiSerial: string) => {
+    const response = await api.get(`/inventory-units/imei/${imeiSerial}`);
+    return response.data;
+  },
+  // Mark as damaged
+  markDamaged: async (unitId: string, notes?: string) => {
+    const response = await api.patch(`/inventory-units/${unitId}/damage`, null, {
+      params: { notes }
+    });
+    return response.data;
+  },
+  // Update unit status
+  updateStatus: async (unitId: string, status: string) => {
+    const response = await api.patch(`/inventory-units/${unitId}/status`, null, {
+      params: { status }
+    });
+    return response.data;
+  },
+  // Get all units for variant
+  getByVariant: async (variantId: string, params?: { page?: number; size?: number }) => {
+    const response = await api.get(`/inventory-units/variant/${variantId}`, { params });
+    return response.data;
+  },
+};
+

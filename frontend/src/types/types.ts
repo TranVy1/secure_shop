@@ -366,3 +366,67 @@ export interface AnalyticsSummary {
   revenueTrend: RevenueDataPoint[];
   topProducts: TopProduct[];
 }
+
+// ==== Product Variant/Color/Attribute Types ====
+
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  variantType: string; // "resolution" | "lens_type" | "color" | "memory" | etc.
+  variantValue: string; // "4MP" | "50m" | "Black" | "8GB" | etc.
+  sku: string;
+  priceAdjustment: number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductColor {
+  id: string;
+  productId: string;
+  colorName: string;
+  hexCode: string;
+  imageUrl?: string;
+  description?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductAttribute {
+  id: string;
+  productId: string;
+  attributeKey: string; // "resolution", "ir_range", "storage", etc.
+  attributeName: string; // "Độ phân giải", "Tầm hồng ngoại", etc.
+  attributeValue: string; // "4MP", "50m", "8GB", etc.
+  valueType: string; // "string" | "number" | "boolean" | "select"
+  unit?: string; // "MP", "m", "GB", etc.
+  variantId?: string; // Optional: belongs to specific variant
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InventoryUnit {
+  id: string;
+  variantId: string;
+  colorId?: string;
+  imeiSerial: string;
+  unitStatus: string; // "AVAILABLE" | "RESERVED" | "SOLD" | "RETURNED" | "DAMAGED"
+  warrantyExpiresAt?: string;
+  warehouseLocation?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VariantColorMapping {
+  id: string;
+  variantId: string;
+  colorId: string;
+  sku: string;
+  colorPriceAdjustment: number;
+  totalPriceAdjustment: number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}

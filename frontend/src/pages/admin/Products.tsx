@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, RefreshCw, QrCode } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Edit, Trash2, RefreshCw, QrCode, Settings } from 'lucide-react';
 import type { ProductSummary } from '../../types/types';
 import { productApi } from '../../utils/api';
 import ProductModal from '../../components/admin-modal/ProductModal';
@@ -12,6 +13,7 @@ import Pagination from '../../components/Pagination';
 type Props = {};
 
 const Products: React.FC<Props> = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -252,6 +254,13 @@ const Products: React.FC<Props> = () => {
                     </td>
                     <td className="px-4 py-4 text-sm text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => navigate(`/admin/products/${product.id}/details`)}
+                          className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                          title="Quản lý variant, màu, thuộc tính"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => setBarcodeModal({ isOpen: true, product })}
                           className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
