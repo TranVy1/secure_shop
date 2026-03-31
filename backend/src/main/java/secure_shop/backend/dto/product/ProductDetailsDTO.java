@@ -44,6 +44,19 @@ public class ProductDetailsDTO implements Serializable {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Set<ReviewDTO> reviews;
 
+    // ===== NEW: Variants, Colors, Attributes =====
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<ProductVariantDTO> variants;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<ProductColorDTO> colors;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<ProductAttributeDTO> attributes;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<VariantColorMappingDTO> variantColorMappings;
+
     // Timestamps for tracking
     private Instant createdAt;
     private Instant updatedAt;

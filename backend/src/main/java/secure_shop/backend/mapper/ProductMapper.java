@@ -2,11 +2,8 @@
 package secure_shop.backend.mapper;
 
 import org.springframework.stereotype.Component;
-import secure_shop.backend.dto.product.ProductDTO;
-import secure_shop.backend.dto.product.ProductDetailsDTO;
-import secure_shop.backend.dto.product.ProductSummaryDTO;
-import secure_shop.backend.entities.MediaAsset;
-import secure_shop.backend.entities.Product;
+import secure_shop.backend.dto.product.*;
+import secure_shop.backend.entities.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,16 +18,32 @@ public class ProductMapper {
     private final MediaAssetMapper mediaAssetMapper;
     private final ReviewMapper reviewMapper;
     private final InventoryMapper inventoryMapper;
+    private final ProductVariantMapper variantMapper;
+    private final ProductColorMapper colorMapper;
+    private final ProductAttributeMapper attributeMapper;
+    private final InventoryUnitMapper inventoryUnitMapper;
+    private final VariantColorMappingMapper variantColorMappingMapper;
 
     public ProductMapper(BrandMapper brandMapper,
                          CategoryMapper categoryMapper,
                          MediaAssetMapper mediaAssetMapper,
-                         ReviewMapper reviewMapper, InventoryMapper inventoryMapper) {
+                         ReviewMapper reviewMapper,
+                         InventoryMapper inventoryMapper,
+                         ProductVariantMapper variantMapper,
+                         ProductColorMapper colorMapper,
+                         ProductAttributeMapper attributeMapper,
+                         InventoryUnitMapper inventoryUnitMapper,
+                         VariantColorMappingMapper variantColorMappingMapper) {
         this.brandMapper = brandMapper;
         this.categoryMapper = categoryMapper;
         this.mediaAssetMapper = mediaAssetMapper;
         this.reviewMapper = reviewMapper;
         this.inventoryMapper = inventoryMapper;
+        this.variantMapper = variantMapper;
+        this.colorMapper = colorMapper;
+        this.attributeMapper = attributeMapper;
+        this.inventoryUnitMapper = inventoryUnitMapper;
+        this.variantColorMappingMapper = variantColorMappingMapper;
     }
 
     public ProductDTO toProductDTO(Product p) {
@@ -123,6 +136,10 @@ public class ProductMapper {
                 .thumbnailUrl(p.getThumbnailUrl())
                 .rating(p.getRating())
                 .reviewCount(p.getReviewCount())
+                // ===== NEW: Map variants, colors, attributes =====
+                .variants(p.getVariants() != null ? variantMapper.toDTOList(p.getVariants()) : Collections.emptyList())
+                .colors(p.getColors() != null ? colorMapper.toDTOList(p.getColors()) : Collections.emptyList())
+                .attributes(p.getAttributes() != null ? attributeMapper.toDTOList(p.getAttributes()) : Collections.emptyList())
                 .build();
     }
 
@@ -174,4 +191,27 @@ public class ProductMapper {
         return product;
     }
 
+    // ===== NEW: Helper methods for variants, colors, attributes, inventory =====
+    
+    public List<ProductVariantDTO> toVariantDTOList(List<ProductVariant> variants) {
+        return variantMapper.toDTOList(variants);
+    }
+
+    public List<ProductColorDTO> toColorDTOList(List<ProductColor> colors) {
+        return colorMapper.toDTOList(colors);
+    }
+
+    public List<ProductAttributeDTO> toAttributeDTOList(List<ProductAttribute> attributes) {
+        return attributeMapper.toDTOList(attributes);
+    }
+
+    public List<InventoryUnitDTO> toInventoryUnitDTOList(List<InventoryUnit> units) {
+        return inventoryUnitMapper.toDTOList(units);
+    }
+
+    public List<VariantColorMappingDTO> toVariantColorMappingDTOList(List<VariantColorMapping> mappings) {
+        return variantColorMappingMapper.toDTOList(mappings);
+    }
+
 }
+

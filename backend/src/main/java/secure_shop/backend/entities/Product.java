@@ -109,6 +109,19 @@ public class Product extends BaseEntity {
     @Builder.Default
     private Set<OrderItem> orderItems = new HashSet<>();
 
+    // ===== NEW: Product Variants, Colors, Attributes =====
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductVariant> variants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductColor> colors = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductAttribute> attributes = new ArrayList<>();
+
     // ===== Helper methods =====
     public void softDelete() {
         this.deletedAt = Instant.now();
