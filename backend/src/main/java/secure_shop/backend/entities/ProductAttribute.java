@@ -42,7 +42,6 @@ public class ProductAttribute extends BaseEntity {
 
     @NotBlank(message = "Khóa đặc tính không được để trống")
     @Size(max = 100, message = "Khóa tối đa 100 ký tự")
-    @Pattern(regexp = "^[a-z_]+$", message = "Khóa chỉ được chứa chữ thường và '_'")
     @Column(nullable = false, length = 100)
     private String attributeKey; // Ví dụ: "resolution", "lens_type", "ir_range"
 

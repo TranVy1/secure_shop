@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import secure_shop.backend.dto.product.InventoryUnitDTO;
 import secure_shop.backend.entities.InventoryUnit.InventoryUnitStatus;
 import secure_shop.backend.service.InventoryUnitService;
+import secure_shop.backend.dto.product.request.BulkImportRequest;
+import secure_shop.backend.dto.product.request.GenerateRangeRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -38,10 +40,9 @@ public class InventoryUnitController {
     // ===== Bulk Import IMEIs =====
     @PostMapping("/bulk-import")
     public ResponseEntity<Map<String, Object>> bulkImportIMEIs(
-            @RequestParam UUID variantId,
-            @RequestParam(required = false) UUID colorId,
-            @RequestBody List<String> imeiList) {
-        List<InventoryUnitDTO> created = inventoryUnitService.bulkImportIMEIs(variantId, colorId, imeiList);
+            @Valid @RequestBody BulkImportRequest request) {
+        List<InventoryUnitDTO> created = inventoryUnitService.bulkImportIMEIs(
+                request.getVariantId(), request.getColorId(), request.getImeiList());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "count", created.size(),
                 "units", created
@@ -51,13 +52,10 @@ public class InventoryUnitController {
     // ===== Generate IMEI Range =====
     @PostMapping("/generate-range")
     public ResponseEntity<Map<String, Object>> generateIMEIRange(
-            @RequestParam UUID variantId,
-            @RequestParam(required = false) UUID colorId,
-            @RequestParam String prefix,
-            @RequestParam String startSequence,
-            @RequestParam int quantity) {
+            @Valid @RequestBody GenerateRangeRequest request) {
         List<InventoryUnitDTO> generated = inventoryUnitService.generateIMEIRange(
-                variantId, colorId, prefix, startSequence, quantity);
+                request.getVariantId(), request.getColorId(), request.getPrefix(), 
+                request.getStartSequence(), request.getQuantity());
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "count", generated.size(),
                 "units", generated

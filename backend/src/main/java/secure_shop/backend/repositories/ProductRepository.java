@@ -16,6 +16,8 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
     Product findProductById(UUID id);
+    Optional<Product> findByName(String name);
+    Optional<Product> findBySku(String sku);
 
     @Query("""
                 SELECT p FROM Product p

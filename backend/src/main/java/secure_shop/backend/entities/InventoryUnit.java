@@ -52,7 +52,7 @@ public class InventoryUnit extends BaseEntity {
     @Column(nullable = false, unique = true, length = 100)
     private String imeiSerial; // Ví dụ: "123456789000001", "CAM-2024-00001"
 
-    @NotBlank(message = "Trạng thái không được để trống")
+    @NotNull(message = "Trạng thái không được để trống")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     @Builder.Default

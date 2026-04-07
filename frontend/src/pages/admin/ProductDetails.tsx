@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, RefreshCw, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, RefreshCw, Loader2, Package } from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
   productApi,
   productVariantApi,
   productColorApi,
   productAttributeApi,
+  inventoryUnitApi,
 } from '../../utils/api';
 import ProductVariantModal from '../../components/admin-modal/ProductVariantModal';
 import ProductColorModal from '../../components/admin-modal/ProductColorModal';
@@ -45,6 +46,9 @@ const ProductDetails: React.FC = () => {
 
   // Inventory
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  // Map variantId -> list of IMEI units
+  const [imeiMap, setImeiMap] = useState<Record<string, any[]>>({});
+  const [imeiLoading, setImeiLoading] = useState(false);
 
   useEffect(() => {
     if (productId) {
@@ -90,7 +94,7 @@ const ProductDetails: React.FC = () => {
           setAttributes(attributesData || []);
           break;
         case 'inventory':
-          // Inventory is handled via modal
+          await loadImeiForAllVariants();
           break;
       }
     } catch (error) {
@@ -98,6 +102,32 @@ const ProductDetails: React.FC = () => {
       toast.error('Lỗi tải dữ liệu');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadImeiForAllVariants = async () => {
+    if (!product?.id) return;
+    setImeiLoading(true);
+    try {
+      const variantsData = await productVariantApi.getByProduct(product.id);
+      const allVariants: ProductVariant[] = variantsData || [];
+      const results: Record<string, any[]> = {};
+      await Promise.all(
+        allVariants.map(async (v) => {
+          try {
+            const units = await inventoryUnitApi.getByVariant(v.id);
+            results[v.id] = Array.isArray(units) ? units : (units?.content || []);
+          } catch {
+            results[v.id] = [];
+          }
+        })
+      );
+      setImeiMap(results);
+      setVariants(allVariants);
+    } catch (error) {
+      toast.error('Lỗi tải danh sách IMEI');
+    } finally {
+      setImeiLoading(false);
     }
   };
 
@@ -204,10 +234,11 @@ const ProductDetails: React.FC = () => {
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-lg"
+          onClick={() => navigate('/admin', { state: { tab: 'products' } })}
+          className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-900 transition-colors font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm">Danh sách sản phẩm</span>
         </button>
         <div>
           <h1 className="text-2xl font-bold text-zinc-800">{product.name}</h1>
@@ -457,11 +488,90 @@ const ProductDetails: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  Sử dụng chức năng "Nhập IMEI" để thêm danh sách IMEI hoặc tự động tạo số IMEIs cho biến thể sản phẩm.
-                </p>
-              </div>
+              {imeiLoading ? (
+                <div className="text-center py-12">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-purple-600" />
+                  <p className="text-sm text-gray-500 mt-2">Đang tải dữ liệu IMEI...</p>
+                </div>
+              ) : variants.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 border-2 border-dashed rounded-lg">
+                  <Package className="w-10 h-10 mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500">Sản phẩm chưa có biến thể nào. Hãy thêm biến thể trước khi nhập IMEI.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {variants.map((variant) => {
+                    const units: any[] = imeiMap[variant.id] || [];
+                    const available = units.filter(u => u.unitStatus === 'AVAILABLE').length;
+                    const sold = units.filter(u => u.unitStatus === 'SOLD').length;
+                    const reserved = units.filter(u => u.unitStatus === 'RESERVED').length;
+                    const damaged = units.filter(u => u.unitStatus === 'DAMAGED').length;
+                    return (
+                      <div key={variant.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        {/* Variant header */}
+                        <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b">
+                          <div>
+                            <span className="font-semibold text-gray-800">{variant.variantType}: {variant.variantValue}</span>
+                            <span className="ml-3 text-xs text-gray-400 font-mono bg-gray-100 px-2 py-0.5 rounded border">{variant.sku}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs font-medium">
+                            <span className="px-2 py-1 rounded-full bg-green-100 text-green-700">✔ {available} sẵn có</span>
+                            {reserved > 0 && <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">⏳ {reserved} đặt</span>}
+                            {sold > 0 && <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700">📦 {sold} đã bán</span>}
+                            {damaged > 0 && <span className="px-2 py-1 rounded-full bg-red-100 text-red-700">⚠ {damaged} hỏng</span>}
+                            <span className="text-gray-500">Tổng: {units.length}</span>
+                          </div>
+                        </div>
+
+                        {/* IMEI list */}
+                        {units.length === 0 ? (
+                          <div className="px-5 py-6 text-center text-sm text-gray-400 italic">
+                            Chưa có IMEI nào cho biến thể này. Nhấn "Nhập IMEI" để thêm.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50 border-b">
+                                <tr>
+                                  <th className="px-4 py-2 text-left font-semibold text-gray-600">IMEI / Serial</th>
+                                  <th className="px-4 py-2 text-left font-semibold text-gray-600">Trạng thái</th>
+                                  <th className="px-4 py-2 text-left font-semibold text-gray-600">Màu sắc</th>
+                                  <th className="px-4 py-2 text-left font-semibold text-gray-600">Vị trí kho</th>
+                                  <th className="px-4 py-2 text-left font-semibold text-gray-600">Ghi chú</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100">
+                                {units.map((unit: any) => (
+                                  <tr key={unit.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-2 font-mono text-xs font-semibold text-gray-800">{unit.imeiSerial}</td>
+                                    <td className="px-4 py-2">
+                                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                        unit.unitStatus === 'AVAILABLE' ? 'bg-green-100 text-green-700' :
+                                        unit.unitStatus === 'SOLD'      ? 'bg-blue-100 text-blue-700' :
+                                        unit.unitStatus === 'RESERVED'  ? 'bg-yellow-100 text-yellow-700' :
+                                        unit.unitStatus === 'RETURNED'  ? 'bg-purple-100 text-purple-700' :
+                                        'bg-red-100 text-red-700'
+                                      }`}>
+                                        {unit.unitStatus === 'AVAILABLE' ? 'Sẵn có' :
+                                         unit.unitStatus === 'SOLD'      ? 'Đã bán' :
+                                         unit.unitStatus === 'RESERVED'  ? 'Đặt hàng' :
+                                         unit.unitStatus === 'RETURNED'  ? 'Trả lại' : 'Hỏng'}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2 text-xs text-gray-500">{unit.color?.colorName || '—'}</td>
+                                    <td className="px-4 py-2 text-xs text-gray-500 font-mono">{unit.warehouseLocation || '—'}</td>
+                                    <td className="px-4 py-2 text-xs text-gray-400 max-w-[180px] truncate">{unit.notes || '—'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -507,6 +617,7 @@ const ProductDetails: React.FC = () => {
         productId={product.id}
         onSuccess={() => {
           toast.success('Cập nhật kho hàng thành công!');
+          loadImeiForAllVariants();
         }}
       />
 

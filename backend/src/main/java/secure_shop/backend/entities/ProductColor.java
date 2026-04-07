@@ -40,7 +40,7 @@ public class ProductColor extends BaseEntity {
 
     @NotBlank(message = "Mã màu hex không được để trống")
     @Pattern(regexp = "^#[0-9A-Fa-f]{6}$", message = "Mã hex phải đúng định dạng (#RRGGBB)")
-    @Column(nullable = false, length = 7, unique = true)
+    @Column(nullable = false, length = 7)
     private String hexCode; // Ví dụ: "#000000" cho Black
 
     @Size(max = 2048, message = "URL ảnh quá dài")

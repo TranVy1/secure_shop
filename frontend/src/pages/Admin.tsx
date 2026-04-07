@@ -4,6 +4,7 @@ import {
   Percent, Users, FileText, MessageSquare, BarChart3,
   Warehouse, Star, Store, ChevronRight, LogOut, Bell, MessageCircle
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAppSelector } from '../hooks';
 
 interface AdminModule {
@@ -45,6 +46,7 @@ const POS_FULLSCREEN_TABS: TabKey[] = ['pos', 'livechat'];
 
 const Admin: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const location = useLocation();
 
   const visibleTabs = user?.role?.toLowerCase() === 'staff'
     ? ALL_TABS.filter(t => t.key === 'pos' || t.key === 'orders')
@@ -58,6 +60,14 @@ const Admin: React.FC = () => {
   const [currentLoadData, setCLD] = useState<((p?: number, s?: number) => Promise<any>) | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
+
+  // Đọc tab từ navigation state (VD: navigate('/admin', { state: { tab: 'products' } }))
+  useEffect(() => {
+    const stateTab = (location.state as any)?.tab as TabKey | undefined;
+    if (stateTab && ALL_TABS.some(t => t.key === stateTab)) {
+      setActiveTab(stateTab);
+    }
+  }, [location.state]);
 
   // Correct active tab if role changes
   useEffect(() => {

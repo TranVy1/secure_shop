@@ -38,7 +38,6 @@ public class ProductVariant extends BaseEntity {
 
     @NotBlank(message = "Loại biến thể không được để trống")
     @Size(max = 100, message = "Loại biến thể tối đa 100 ký tự")
-    @Pattern(regexp = "^[A-Za-z0-9_-]+$", message = "Loại biến thể chỉ được chứa chữ, số, '-' và '_'")
     @Column(nullable = false, length = 100)
     private String variantType; // Ví dụ: "resolution", "lens_type", "color", "memory"
 

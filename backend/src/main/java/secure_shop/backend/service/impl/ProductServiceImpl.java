@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import secure_shop.backend.dto.product.*;
 import secure_shop.backend.entities.*;
+import secure_shop.backend.exception.ResourceAlreadyExistsException;
 import secure_shop.backend.exception.ResourceNotFoundException;
 import secure_shop.backend.mapper.ProductMapper;
 import secure_shop.backend.repositories.*;
@@ -69,6 +70,13 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO createProduct(ProductDetailsDTO dto) {
+        if (productRepository.findByName(dto.getName()).isPresent()) {
+            throw new ResourceAlreadyExistsException("Tên sản phẩm trùng lặp. Vui lòng chọn tên khác!");
+        }
+        if (dto.getSku() != null && !dto.getSku().isBlank() && productRepository.findBySku(dto.getSku()).isPresent()) {
+            throw new ResourceAlreadyExistsException("Mã SKU này đã tồn tại trong hệ thống. Vui lòng chọn SKU khác!");
+        }
+
         Product product = productMapper.toEntity(dto);
         product.setDeletedAt(null); // đảm bảo không gán nhầm
         product.setActive(true);
@@ -120,6 +128,18 @@ public class ProductServiceImpl implements ProductService {
         // Nếu sản phẩm đã bị xóa mềm → không cho cập nhật
         if (existing.getDeletedAt() != null) {
             throw new IllegalStateException("Cannot update a deleted product");
+        }
+
+        Optional<Product> existingName = productRepository.findByName(dto.getName());
+        if (existingName.isPresent() && !existingName.get().getId().equals(id)) {
+            throw new ResourceAlreadyExistsException("Tên sản phẩm trùng lặp với sản phẩm khác. Vui lòng chọn tên khác!");
+        }
+
+        if (dto.getSku() != null && !dto.getSku().isBlank()) {
+            Optional<Product> existingSku = productRepository.findBySku(dto.getSku());
+            if (existingSku.isPresent() && !existingSku.get().getId().equals(id)) {
+                throw new ResourceAlreadyExistsException("Mã SKU này đã được sử dụng bởi sản phẩm khác. Vui lòng chọn SKU khác!");
+            }
         }
 
         existing.setSku(dto.getSku());
