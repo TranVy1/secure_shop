@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: secure-shop-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=SecureShop123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - secure-shop-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: secure-shop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - secure-shop-network
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: secure-shop-backend
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://sqlserver:1433;databaseName=secure_shop;encrypt=true;trustServerCertificate=true
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=SecureShop123!
+      - SPRING_DATA_REDIS_HOST=redis
+      - FRONTEND_URL=http://localhost
+    depends_on:
+      - sqlserver
+      - redis
+    networks:
+      - secure-shop-network
+    volumes:
+      - ./backend/uploads:/app/uploads
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: secure-shop-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - secure-shop-network
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - secure-shop-network
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana-dashboard.json:/var/lib/grafana/dashboards/grafana-dashboard.json
+    depends_on:
+      - prometheus
+    networks:
+      - secure-shop-network
+
+volumes:
+  sqlserver_data:
+  redis_data:
+
+networks:
+  secure-shop-network:
+    driver: bridge
